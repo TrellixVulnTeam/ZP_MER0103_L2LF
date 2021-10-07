@@ -1,0 +1,59 @@
+#first a follow demo 1 #
+cfg=grammar1
+N={S,A,B,C}
+T={a,b,+,(,),$}
+S=S
+P=S->C$
+A->b|eps
+B->+S|eps
+C->A(C)|aB
+
+#first a follow demo 2 #
+cfg=grammar2
+N={S,A,B,C}
+T={a,b,c}
+S=S
+P=S->ABC|aSb
+A->aAb|c|C
+B->BabB|AA
+C->eps|baCab
+
+# redukce demo #
+cfg=grammar3
+N={S,A,B,C,D}
+T={a,b}
+S=S
+P=S->AC|B
+A->aC|AbA
+B->Ba|BbA|DB
+C->aa|aBC
+D->aA|eps
+
+# redukce demo 2 #
+cfg=grammar4
+N={A,B,C,D,E,F,G,H,I,J,K,L}
+T={a,b}
+S=A
+P=A => aAbE | HC
+B => DE | EbB
+C => CaHb | HbFaF
+D => aBE | EaaD
+E => AaD | bGB
+F => baHa | KabaA
+G => bbG | IbL
+H => BbK | ab
+I => bb | aLb
+J => AabD | bJb
+K => AbbF | CbH
+L => aAbLa | aI
+
+# epsRulesRemoval #
+cfg=grammar5
+N={S,A,B,C,D}
+T={a,b}
+S=S
+P=S->ASA|aBC|b
+A->BD|aAB
+B->bB|eps
+C->AaA|b
+D->AD|BBB|a

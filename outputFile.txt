@@ -1,0 +1,12 @@
+cavo: Namespace(inputFile='gramatika.txt', outputFile='abc', first=True, follow=False, reduction=False, epsRemoval=False, all=False)
+### mnozina FIRST ###
+S : {'(', 'a', 'b'}
+A : {'eps', 'b'}
+B : {'eps', '+'}
+C : {'a', '(', 'b'}
+a : {'a'}
+b : {'b'}
++ : {'+'}
+( : {'('}
+) : {')'}
+$ : {'$'}
