@@ -345,7 +345,7 @@ def epsRulesRemoval(grammarList):
         temp = ""
         for j in range(i, n):
             temp += test[j]
-            print(temp)'''
+            print(tempp)'''
 
 #hlavni funkce, skrze kterou jsou volany prislusne funkce na zaklade zadanych argumentu
 def main():
