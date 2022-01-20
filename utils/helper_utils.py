@@ -7,8 +7,8 @@ def isNum(char):
     return char.isnumeric()
 
 #funkce cte a vraci 1 znak ze souboru predaneho v argumentu funkce
-def readCharacter(file):
-    return file.read(1)
+def readCharacter(inputFile):
+    return inputFile.read(1)
 
 #funkce cte nasledujici znak ze souboru predaneho v argumentu funkce a posunuje ukazatel o 1 zpet
 def readNextChar(inputFile):
@@ -17,6 +17,12 @@ def readNextChar(inputFile):
         return ''#konec souboru
     inputFile.seek(inputFile.tell() - 1,0) #vraceni ukazatele cteni v souboru o 1 zpet
     return nextChar
+
+#funkce pro cteni celeho souboru najednou
+def readWholeFile(inputFile):
+    f = open(inputFile, 'r')
+    data = f.read()
+    return data
 
 #funkce pro inplace update (union) mezi dvema strukturami set
 def union(first, begins):

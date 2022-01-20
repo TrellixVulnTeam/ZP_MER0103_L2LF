@@ -1,4 +1,5 @@
 import sys, argparse, copy
+import PySimpleGUI as sg
 import utils.helper_utils as h_utils
 import utils.print_utils as p_utils
 import utils.struct_utils as s_utils
@@ -28,7 +29,7 @@ def parseArguments():
     else: #outputFile nebyl zadan, vystup souboru je do prikazove radky
         outputFile = False
     if args.all:
-        arguments = s_utils.Arguments(args.inputFile, outputFile, True, True, True, False)
+        arguments = s_utils.Arguments(args.inputFile, outputFile, True, True, True, True)
     else:
         arguments = s_utils.Arguments(args.inputFile, outputFile, args.first, args.follow, args.reduction, args.epsRemoval)
     return arguments
@@ -131,7 +132,6 @@ def nextToken(file):
         else:
             return s_utils.TokenKind.ERROR
     elif(c.isalnum() or c in s_utils.specialChars): # identifikator a-z
-        #print("hahahahaha")
         temp = h_utils.readNextChar(file)
         while(temp.isalnum() or temp in s_utils.specialChars):
             c = c + h_utils.readCharacter(file)
@@ -159,7 +159,7 @@ def loadAndParseData(inputFile):
             while True:
                 token = nextToken(file)
                 if(token == s_utils.TokenKind.EOF):
-                    print("konec souboru panacku!")
+                    print("konec souboru!")
                     return grammarList
                 elif(token == s_utils.TokenKind.EQUALS):
                     print("EQUALS TOKEN")
@@ -305,7 +305,6 @@ def epsRulesRemoval(grammarList):
     for rule in grammarList.rules:
         if ('Îµ' in rule.rightSide or 'epsilon' in rule.rightSide or 'eps' in rule.rightSide):  # ε
             setE.update(rule.leftSide)
-    print('najite ciste epsilony: ',setE)
     rules = h_utils.getRulesSet(grammarList.rules)
     updated = True
     while updated:
@@ -319,40 +318,70 @@ def epsRulesRemoval(grammarList):
                 setE.update(nt)
         if changed == len(setE):
             updated = False
-    print('setE: ',setE)
-    print(list(rules))
+    print('mnozina E = ',setE)
     newRules = copy.deepcopy(rules)
-    print(newRules)
-    for rule in rules:
-        for i in setE:
-            for j in rule[1]:
-                if i == j:
-                    print('uprava: ', rule[1])
-                    print(type(rule[1]))
-
-
-                    n = len(rule[1])
-                    string = str(rule[1])
-                    for k in range(n):
-                        temp = ""
-                        for l in range(k, n):
-                            temp += string[l]
-                            print(temp)
-
-    '''test = "ABCA"
+    for rule in rules: #cyklus prochazi vsechny pravidla
+        for i in setE: #cyklus prochazi vsechny symboly z mnoziny E
+            for j in rule[1]: #cyklus prochazi vsechny znaky z prave strany daneho pravidla
+                if i == j: #pokud se symbol z mnoziny E shoduje se znakem z prave strany daneho pravidla, budu generovat nove pravidla namisto epsilon
+                    for x in range(rule[1].count(j)): #iteruji tolikrat, kolikrat byl dany neterminalni symbol nalezen na prav estrane pravidla
+                        if rule[1].count(j) == 1: #reseni pro pravidla s jednim vyskytem neterminalu
+                            temp = rule[1]
+                            temp = temp.replace(j,'')
+                            newRule = (rule[0],temp)
+                            newRules += (newRule,)
+                        if (rule[1].count(j) == len(rule[1])) and len(rule[1]) > 1: #reseni pro pavidla se dvema a vice vyskyty stejneho neterminalniho symbolu v pravidlu
+                            temp = rule[1]
+                            for i in range(len(rule[1])-1):
+                                temp = rule[1][i+1:]
+                                newRule = (rule[0], temp)
+                                newRules += (newRule,)
+                            #print('tak co:',rule[0],'->',rule[1],'odstranuji:',j)
+    return set(newRules)
+    '''vypsani vsech moznych podretezcu zadaneho retezce
+    test = "ABCA"
     n = len(test)
-
     for i in range(n):
         temp = ""
         for j in range(i, n):
             temp += test[j]
-            print(temp)
-    '''
+            print(temp)'''
 
 #hlavni funkce, skrze kterou jsou volany prislusne funkce na zaklade zadanych argumentu
 def main():
     arguments = parseArguments() #parsovani argumentu ze vstupu, funkce fraci strukturu namedTuple Arguments
     grammarList = loadAndParseData(arguments.inputFile)
+
+    sg.theme('SystemDefaultForReal')  # Add a touch of color
+    layout = [
+        [sg.Input(key='-IN-'),sg.FileBrowse('Načíst gramatiku',file_types=(('Textové soubory', '*.txt'),), key="filePath", tooltip='Umožňuje vybrat textový soubor s bezkontextovou gramatikou', change_submits=True)],
+        [sg.Multiline('Vložte bezkontextovou gramatiku', key='input'), sg.Multiline('výstup', key='output')],
+        [sg.Button('Potvrdit')],
+        ]
+
+         #[sg.Text("Choose a data file:", size=(20, 1)), sg.Input(size=(60, 2)),
+         # sg.FileBrowse(key="filePath", change_submits=True)],
+         #[sg.Text("Is header included?", size=(20, 1)), sg.Radio('Yes', "RADIO",key='radio1', default=True),
+         # sg.Radio('No', "RADIO",key='radio2')],
+         #[sg.Text("Delimiter:", size=(20, 1)), sg.Input(key="delimiter", size=(60,1))],
+         #[sg.Text("Link prediction method:", size=(20, 1)),
+         # sg.Listbox(key="method", values=(['Adamic-Adar', 'Resource Allocation Index', 'Cosine similarity',
+         #                                   'Sorensen Index', 'CAR-based Common Neighbor Index']), size=(60, 6), enable_events=True)],
+         #[sg.Text("Define threshold:", size=(20, 1)), sg.Input(key="threshold", size=(60, 1))],
+         #[sg.T("")],
+         #[sg.Button("Submit", size=(20, 1)), sg.Button("Exit", size=(20, 1))]]
+    window = sg.Window(" Program pro analýzu bezkontextových gramatik - Daniel Merta, MER0103, ak. rok 2021/2022", layout, default_element_size=(50,15))
+    while True:
+        event, values = window.read()
+        window['input'].update(h_utils.readWholeFile(arguments.inputFile))  # nacteni gramatiky do vstupniho okna
+
+        if event == sg.WIN_CLOSED or event == "Exit":
+            exit()
+        elif event == "Potvrdit":
+            print('jsem tu')
+            window['input'].update(h_utils.readWholeFile(arguments.inputFile)) #nacteni gramatiky do vstupniho okna
+            break
+
     if arguments.first or arguments.follow: #vypocet mnoziny FIRST a FOLLOW
         first, follow, epsilon = firstAndFollow(grammarList, arguments.first, arguments.follow) #algoritmus pro pocitani FIRST a FOLLOW
         if arguments.first:
@@ -360,16 +389,20 @@ def main():
         if arguments.follow:
             p_utils.printFollow(follow) #vypsani mnoziny FOLLOW
     if arguments.reduction: #pocitani redukovane gramatiky
-        p_utils.print('### redukce gramatiky ###')
+        p_utils.printMessage('### redukce gramatiky ###')
         reducedGrammar, isReduced = reduction(grammarList) #algoritmus pro redukci gramatiky
         p_utils.printReductionInfo(isReduced) #vypsani informaci o redukci gramatiky
         p_utils.printGrammarRules(reducedGrammar) #vypsani pravidel gramatiky
-    if arguments.epsRemoval: #odstraneni epsilon pravidel z gramatiky
-        p_utils.printMessage('### odstraneni Epsilon pravidel ###')
+        if arguments.epsRemoval: #odstraneni epsilon pravidel z gramatiky
+            p_utils.printMessage('### odstraneni Epsilon pravidel ###')
         epsRemovedGrammar = epsRulesRemoval(grammarList) #algoritmus pro odstraneni epsilon pravidel
-        #p_utils.printGrammarRules(epsRemovedGrammar) #vypsani pravidel gramatiky
+        p_utils.printGrammarRules(epsRemovedGrammar) #vypsani pravidel gramatiky
+        window['output'].update(p_utils.printGrammarRules(epsRemovedGrammar))
+
     if not arguments.outputFile: #uzavreni vystupniho souboru, pokud byl zadan v argumentu
         sys.stdout.close()
+
+
 
 if __name__ == '__main__':
     main()

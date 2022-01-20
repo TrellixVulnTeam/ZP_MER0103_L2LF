@@ -1,12 +1,11 @@
-cavo: Namespace(inputFile='gramatika.txt', outputFile='abc', first=True, follow=False, reduction=False, epsRemoval=False, all=False)
-### mnozina FIRST ###
-S : {'(', 'a', 'b'}
-A : {'eps', 'b'}
-B : {'eps', '+'}
-C : {'a', '(', 'b'}
-a : {'a'}
-b : {'b'}
-+ : {'+'}
-( : {'('}
-) : {')'}
-$ : {'$'}
+### odstraneni Epsilon pravidel ###
+Pravidla gramatiky: 
+A -> b
+S -> C$
+C -> A(C)
+B -> eps
+C -> aB
+B -> +S
+C -> (C)
+A -> eps
+C -> a

@@ -1,4 +1,5 @@
 import sys, argparse, copy
+import PySimpleGUI as sg
 import utils.helper_utils as h_utils
 import utils.print_utils as p_utils
 import utils.struct_utils as s_utils
@@ -9,7 +10,7 @@ grammarList = []
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='Program je nutne spustit s argumentem -i INPUTFILE, pricemz INPUTFILE je nazev vstupniho souboru. Napovedu lze zobrazit argumentem -h.')
-    parser.add_argument('-i', '--inputFile', required=True, help='Input file must be specified', default='gramatika.txt')
+    parser.add_argument('-i', '--inputFile', required=True, help='Input file must be specified', default='grammar.txt')
     parser.add_argument('-o', '--outputFile', required=False, help='Zadejte nazev vystupniho souboru')
     parser.add_argument('-f', '--first', help='Vypocet mnoziny FIRST', action='store_true')
     parser.add_argument('-g', '--follow', help='Vypocet mnoziny FOLLOW', action='store_true')
@@ -350,24 +351,72 @@ def epsRulesRemoval(grammarList):
 def main():
     arguments = parseArguments() #parsovani argumentu ze vstupu, funkce fraci strukturu namedTuple Arguments
     grammarList = loadAndParseData(arguments.inputFile)
-    if arguments.first or arguments.follow: #vypocet mnoziny FIRST a FOLLOW
+
+    sg.theme('SystemDefaultForReal')  # Add a touch of color
+    tab1_layout = [[sg.Input( key='-IN-', default_text='grammar.txt', readonly=True),sg.FileBrowse('Load CFG',file_types=(('Text files', '*.txt'),), key="fileBrowse",
+        tooltip='Allows to choose text file containing context-free grammar', change_submits=True), sg.Button('Load CFG pattern', key='loadCFGPattern'),
+        sg.Button('Clear windows', key='clearWindows')],
+        [sg.Checkbox('FIRST', key='first'), sg.Checkbox('FOLLOW', key='follow'), sg.Checkbox('Reduction', key='reduction'),sg.Checkbox('Eps', key='eps')],
+        [sg.Text('Input'),sg.Text('Output', pad=((342,3),3))],
+        [sg.Multiline('Enter content-free grammar', key='input'), sg.Multiline('output', key='output')],
+        [sg.Button('Enter'), sg.Button('Close'), sg.Checkbox('Print results to file', key='printToFile', pad=((500,3),3))]]
+    tab2_layout = [[sg.Text('Grammar type detection')]]
+    tab3_layout = [[sg.Text('')]]
+    layout = [[sg.TabGroup([[sg.Tab('CFG operations', tab1_layout), sg.Tab('Type detection', tab2_layout), sg.Tab('Conflict detection', tab3_layout)]])]]
+
+    window = sg.Window('Program pro analýzu bezkontextových gramatik - Daniel Merta, MER0103, ak. rok 2021/2022', layout, default_element_size=(50,15))
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == 'Close':
+            exit()
+        elif event == 'loadCFGPattern':
+            window['input'].update(p_utils.printCFGPattern())
+        elif event == 'clearWindows':
+            window['input'].update('')
+            window['output'].update('')
+        elif event == 'Enter':
+            print(values['-IN-'])
+
+            window['input'].update(h_utils.readWholeFile(values['-IN-']))
+            data = ''
+            if values['first'] or values['follow']:
+                first, follow, epsilon = firstAndFollow(grammarList, values['first'], values['follow'])  # algoritmus pro pocitani FIRST a FOLLOW
+                if values['first']:
+                    data = p_utils.printFirstToMultiline(first, epsilon)
+                if values['follow']:
+                    data += p_utils.printFollowToMultiline(follow)
+            if values['reduction']:
+                reducedGrammar, isReduced = reduction(grammarList)  # algoritmus pro redukci gramatiky
+                data += p_utils.printReductionInfoToMultiline(isReduced)
+                data += p_utils.printGrammarRulesToMultiline(reducedGrammar)
+            if values['eps']:
+                data += '### odstraneni Epsilon pravidel ###\n'
+                epsRemovedGrammar = epsRulesRemoval(grammarList)  # algoritmus pro odstraneni epsilon pravidel
+                data += p_utils.printGrammarRulesToMultiline(epsRemovedGrammar)  # vypsani pravidel gramatiky
+            window['output'].update(data)  # vypsani vysledku do vystupniho okna
+            if values['printToFile']:
+                f = open('outputFile.txt', 'w')
+                f.write(data)
+                f.close()
+
+
+    '''if arguments.first or arguments.follow: #vypocet mnoziny FIRST a FOLLOW
         first, follow, epsilon = firstAndFollow(grammarList, arguments.first, arguments.follow) #algoritmus pro pocitani FIRST a FOLLOW
         if arguments.first:
             p_utils.printFirst(first, epsilon) #vypsani mnoziny FIRST
         if arguments.follow:
             p_utils.printFollow(follow) #vypsani mnoziny FOLLOW
     if arguments.reduction: #pocitani redukovane gramatiky
-        p_utils.printMessage('### redukce gramatiky ###')
         reducedGrammar, isReduced = reduction(grammarList) #algoritmus pro redukci gramatiky
         p_utils.printReductionInfo(isReduced) #vypsani informaci o redukci gramatiky
-            p_utils.printGrammarRules(reducedGrammar) #vypsani pravidel gramatiky
-        if arguments.epsRemoval: #odstraneni epsilon pravidel z gramatiky
+        p_utils.printGrammarRules(reducedGrammar) #vypsani pravidel gramatiky
+    if arguments.epsRemoval: #odstraneni epsilon pravidel z gramatiky
         p_utils.printMessage('### odstraneni Epsilon pravidel ###')
         epsRemovedGrammar = epsRulesRemoval(grammarList) #algoritmus pro odstraneni epsilon pravidel
         p_utils.printGrammarRules(epsRemovedGrammar) #vypsani pravidel gramatiky
     if not arguments.outputFile: #uzavreni vystupniho souboru, pokud byl zadan v argumentu
-        sys.stdout.close()
+        sys.stdout.close()'''
 
 if __name__ == '__main__':
     main()
-    sys.exit(0) #uspesny konec programu
+    #sys.exit(0) #uspesny konec programu
