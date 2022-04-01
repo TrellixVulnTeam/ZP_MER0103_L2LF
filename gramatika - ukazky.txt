@@ -57,3 +57,19 @@ A->BD|aAB
 B->bB|eps
 C->AaA|b
 D->AD|BBB|a
+
+# parsing example
+cfg=grammar6
+N={S,A}
+T={a,b}
+S=S
+P=S->AA
+A->aA|b
+
+# scitani / nasobeni
+cfg=grammar7
+N={S,A}
+T={*,+,a,b}
+S=S
+P=S->S*A|S+A|A
+A->a|b

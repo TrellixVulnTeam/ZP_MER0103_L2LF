@@ -1,11 +1,7 @@
-### odstraneni Epsilon pravidel ###
+### redukce gramatiky ###
+Gramatika je jiz ve zredukovanem tvaru
 Pravidla gramatiky: 
-A -> b
 S -> C$
-C -> A(C)
-B -> eps
-C -> aB
-B -> +S
-C -> (C)
-A -> eps
-C -> a
+A -> b | eps
+B -> +S | eps
+C -> A(C) | aB

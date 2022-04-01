@@ -261,7 +261,7 @@ def reduction(grammarList):
                     flag = False
             if(flag == True or expression == ''):
                 T_validNonterminals.add(nt)
-    print('mnozina T = ',T_validNonterminals)
+    # print('mnozina T = ',T_validNonterminals)
     nonterminalsToRemove = set() #struktura set pro neterminalni symboly k odstraneni
     for i in setOfNonterminals:
         if(i not in T_validNonterminals):
@@ -282,7 +282,7 @@ def reduction(grammarList):
                 for elem in i[1]:
                     if(elem in setOfNonterminals and elem not in D_reachableNonterminals):
                         D_reachableNonterminals.update(elem)
-    print('mnozina D = ',D_reachableNonterminals)
+    # print('mnozina D = ',D_reachableNonterminals)
     finalListOfRules = copy.deepcopy(listOfRules) #zkopirovani pravidel do finalni promenne
     for rule in listOfRules:
         for elem in T_validNonterminals:
@@ -297,6 +297,7 @@ def reduction(grammarList):
     #gramatika byla zredukovana
     else:
         isReduced = False
+        grammarList.setNewRulesFromTupleList(finalListOfRules)
         return finalListOfRules, isReduced
 
 #funkce pro odstraneni epsilon pravidel z gramatiky
@@ -345,7 +346,7 @@ def epsRulesRemoval(grammarList):
         temp = ""
         for j in range(i, n):
             temp += test[j]
-            print(tempp)'''
+            print(temp)'''
 
 #hlavni funkce, skrze kterou jsou volany prislusne funkce na zaklade zadanych argumentu
 def main():
@@ -360,9 +361,13 @@ def main():
         [sg.Text('Input'),sg.Text('Output', pad=((342,3),3))],
         [sg.Multiline('Enter content-free grammar', key='input'), sg.Multiline('output', key='output')],
         [sg.Button('Enter'), sg.Button('Close'), sg.Checkbox('Print results to file', key='printToFile', pad=((500,3),3))]]
-    tab2_layout = [[sg.Text('Grammar type detection')]]
+    tab2_layout = [
+        [sg.Button('Build LR items', key='createParsingTable'), sg.Text('Parse:', pad=((260,3),3)), sg.InputText(key='text_to_parse',size=(25, 1)), sg.Button('Validate input', key='validateInput')],
+        [sg.Text('LR Items:'),  sg.Text('Input validation:', pad=((312,3),3))],
+        [sg.Multiline('', key='parsing_table'), sg.Multiline('' ,key='input_validation')]
+    ]
     tab3_layout = [[sg.Text('')]]
-    layout = [[sg.TabGroup([[sg.Tab('CFG operations', tab1_layout), sg.Tab('Type detection', tab2_layout), sg.Tab('Conflict detection', tab3_layout)]])]]
+    layout = [[sg.TabGroup([[sg.Tab('CFG operations', tab1_layout), sg.Tab('LR Parser', tab2_layout), sg.Tab('Conflict detection', tab3_layout)]])]]
 
     window = sg.Window('Program pro analýzu bezkontextových gramatik - Daniel Merta, MER0103, ak. rok 2021/2022', layout, default_element_size=(50,15))
     while True:
@@ -398,6 +403,51 @@ def main():
                 f = open('outputFile.txt', 'w')
                 f.write(data)
                 f.close()
+        elif event == 'createParsingTable':
+            reduction(grammarList)  # algoritmus pro redukci gramatiky
+
+            parser = s_utils.LRParser(grammarList)
+            closures = parser.buildClosures()
+            parsingTable = parser.buildParsingTable()
+
+            data = ''
+            data += '### LR polozky ###\n\n'
+            data += p_utils.printClosuresToMultiline(closures)
+
+            data += '\n\n'
+            data += '### LR(0) tabulka ###\n\n'
+            data += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
+
+            window['parsing_table'].update(data)
+
+        elif event == 'validateInput':
+            reduction(grammarList)  # algoritmus pro redukci gramatiky
+
+            parser = s_utils.LRParser(grammarList)
+            closures = parser.buildClosures()
+            parsingTable = parser.buildParsingTable()
+
+            dataLR = ''
+            dataLR += '### LR polozky ###\n\n'
+            dataLR += p_utils.printClosuresToMultiline(closures)
+
+            dataLR += '\n\n'
+            dataLR += '### LR(0) tabulka ###\n\n'
+            dataLR += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
+
+            window['parsing_table'].update(dataLR)
+
+            inputText = values['text_to_parse']
+            if not inputText[-1] == '$': #input must have ending character
+                inputText += '$'
+
+            output = parser.parseLR0Input(inputText)
+
+            data = '### LR(0) validation ###\n'
+            data += "'%s' is %s" % (values['text_to_parse'], output)
+
+            window['input_validation'].update(data)
+
 
 
     '''if arguments.first or arguments.follow: #vypocet mnoziny FIRST a FOLLOW

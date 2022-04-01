@@ -109,3 +109,56 @@ def printError(message):
 
 def printMessage(message):
     print(message)
+
+def insert_pointer(string, index):
+    return string[:index] + '.' + string[index:]
+
+def printClosuresToMultiline(closures):
+    data = ''
+    for key in closures:
+        data += 'KEY %s\n' % (key)
+        for rule in closures[key].rules:
+            data += '%s->%s goto %s\n' % (rule.leftSide, insert_pointer(rule.rightSide[0], rule.pointer), rule.goto)
+        data += '\n'
+    return data
+
+def printParsingTableToMultiline(grammar, parsingTable):
+    maxStepLength = 0 # output spacing formatting
+    for key in parsingTable:
+        keyLength = len(key)
+        maxStepLength = keyLength if keyLength > maxStepLength else maxStepLength
+
+    data = ''.join("   " for i in range(maxStepLength))
+    data += " | "
+    for terminal in grammar.terminals:
+        data += "%s  " % terminal.value
+        data += ''.join("  " for i in range(maxStepLength - len(terminal.value) + 1))
+    data += '$  | '
+    for nonterminal in grammar.nonterminals:
+        data += "%s  " % nonterminal.value
+        data += ''.join("  " for i in range(maxStepLength - len(nonterminal.value) + 1))
+    data += "\n"
+    for key in parsingTable:
+        data += '%s' % key
+        data += "".join(" " for i in range(maxStepLength))
+        data += " | "
+        for terminal in grammar.terminals:
+            if terminal.value in parsingTable[key]:
+                data += parsingTable[key][terminal.value]
+                data += "".join("  " for i in range(maxStepLength))
+            else:
+                data += "".join("     " for i in range(maxStepLength))
+        if '$' in parsingTable[key]:
+            data += parsingTable[key]['$']
+            data += " "
+        else:
+            data += "".join("     " for i in range(maxStepLength))
+        data += "| "
+        for nonterminal in grammar.nonterminals:
+            if nonterminal.value in parsingTable[key]:
+                data += parsingTable[key][nonterminal.value]
+                data += "".join("    " for i in range(maxStepLength))
+            else:
+                data += "".join("     " for i in range(maxStepLength))
+        data += "\n"
+    return data
