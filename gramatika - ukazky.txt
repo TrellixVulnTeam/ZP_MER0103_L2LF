@@ -34,18 +34,18 @@ cfg=grammar4
 N={A,B,C,D,E,F,G,H,I,J,K,L}
 T={a,b}
 S=A
-P=A => aAbE | HC
-B => DE | EbB
-C => CaHb | HbFaF
-D => aBE | EaaD
-E => AaD | bGB
-F => baHa | KabaA
-G => bbG | IbL
-H => BbK | ab
-I => bb | aLb
-J => AabD | bJb
-K => AbbF | CbH
-L => aAbLa | aI
+P=A -> aAbE | HC
+B -> DE | EbB
+C -> CaHb | HbFaF
+D -> aBE | EaaD
+E -> AaD | bGB
+F -> baHa | KabaA
+G -> bbG | IbL
+H -> BbK | ab
+I -> bb | aLb
+J -> AabD | bJb
+K -> AbbF | CbH
+L -> aAbLa | aI
 
 # epsRulesRemoval #
 cfg=grammar5
@@ -73,3 +73,30 @@ T={*,+,a,b}
 S=S
 P=S->S*A|S+A|A
 A->a|b
+
+# LL parser
+cfg=grammar8
+N={E,T,R,S,F}
+T={n,+,*,(,)}
+S=E
+P=E->TR
+R->eps|+E
+T->FS
+S->eps|*T
+F->n|(E)
+
+# LL first/first konflikt
+cfg=grammar9
+N={S,A}
+T={b,a}
+S=S
+P=S->A|Ab
+A->a|eps
+
+# LL first/follow konflikt
+cfg=grammar10
+N={S,A}
+T={b,a}
+S=S
+P=S->Aab
+A->a|eps

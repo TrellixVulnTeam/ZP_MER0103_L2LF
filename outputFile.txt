@@ -1,7 +1,0 @@
-### redukce gramatiky ###
-Gramatika je jiz ve zredukovanem tvaru
-Pravidla gramatiky: 
-S -> C$
-A -> b | eps
-B -> +S | eps
-C -> A(C) | aB

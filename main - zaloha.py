@@ -1,5 +1,5 @@
 import sys, argparse, copy
-import PySimpleGUI as sg
+import PySimpleGUIQt as sg
 import utils.helper_utils as h_utils
 import utils.print_utils as p_utils
 import utils.struct_utils as s_utils
@@ -10,7 +10,7 @@ grammarList = []
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='Program je nutne spustit s argumentem -i INPUTFILE, pricemz INPUTFILE je nazev vstupniho souboru. Napovedu lze zobrazit argumentem -h.')
-    parser.add_argument('-i', '--inputFile', required=True, help='Input file must be specified', default='gramatika.txt')
+    parser.add_argument('-i', '--inputFile', required=True, help='Input file must be specified', default='grammar.txt')
     parser.add_argument('-o', '--outputFile', required=False, help='Zadejte nazev vystupniho souboru')
     parser.add_argument('-f', '--first', help='Vypocet mnoziny FIRST', action='store_true')
     parser.add_argument('-g', '--follow', help='Vypocet mnoziny FOLLOW', action='store_true')
@@ -227,6 +227,7 @@ def firstAndFollow(grammarList, computeFirst, computeFollow):
                         break
                 else:
                     updated |= h_utils.union(epsilon, {nt})
+        for nt, expression in rules:
             if computeFollow: #vypocet mnoziny FOLLOW
                 aux = follow[nt]
                 for symbol in reversed(expression):
@@ -261,7 +262,7 @@ def reduction(grammarList):
                     flag = False
             if(flag == True or expression == ''):
                 T_validNonterminals.add(nt)
-    print('mnozina T = ',T_validNonterminals)
+    # print('mnozina T = ',T_validNonterminals)
     nonterminalsToRemove = set() #struktura set pro neterminalni symboly k odstraneni
     for i in setOfNonterminals:
         if(i not in T_validNonterminals):
@@ -282,7 +283,7 @@ def reduction(grammarList):
                 for elem in i[1]:
                     if(elem in setOfNonterminals and elem not in D_reachableNonterminals):
                         D_reachableNonterminals.update(elem)
-    print('mnozina D = ',D_reachableNonterminals)
+    # print('mnozina D = ',D_reachableNonterminals)
     finalListOfRules = copy.deepcopy(listOfRules) #zkopirovani pravidel do finalni promenne
     for rule in listOfRules:
         for elem in T_validNonterminals:
@@ -297,6 +298,7 @@ def reduction(grammarList):
     #gramatika byla zredukovana
     else:
         isReduced = False
+        grammarList.setNewRulesFromTupleList(finalListOfRules)
         return finalListOfRules, isReduced
 
 #funkce pro odstraneni epsilon pravidel z gramatiky
@@ -352,58 +354,189 @@ def main():
     arguments = parseArguments() #parsovani argumentu ze vstupu, funkce fraci strukturu namedTuple Arguments
     grammarList = loadAndParseData(arguments.inputFile)
 
-    sg.theme('SystemDefaultForReal')  # Add a touch of color
-    layout = [
-        [sg.Input(key='-IN-'),sg.FileBrowse('Načíst gramatiku',file_types=(('Textové soubory', '*.txt'),), key="filePath", tooltip='Umožňuje vybrat textový soubor s bezkontextovou gramatikou', change_submits=True)],
-        [sg.Multiline('Vložte bezkontextovou gramatiku', key='input'), sg.Multiline('výstup', key='output')],
-        [sg.Button('Potvrdit')],
-        ]
+    sg.theme('LightGrey2')  # Add a touch of color
+    tab1_layout = [[sg.Input( key='-IN-', default_text='grammar.txt'),sg.FileBrowse('Load CFG',file_types=(('Text files', '*.txt'),), key="fileBrowse",
+        tooltip='Allows to choose text file containing context-free grammar', change_submits=True), sg.Button('Load CFG pattern', key='loadCFGPattern'),
+        sg.Button('Clear windows', key='clearWindows')],
+        [sg.Checkbox('FIRST', key='first'), sg.Checkbox('FOLLOW', key='follow'), sg.Checkbox('Reduction', key='reduction'),sg.Checkbox('Eps', key='eps')],
+        [sg.Text('Input'),sg.Text('Output', pad=((342,3),3))],
+        [sg.Multiline('Enter content-free grammar', key='input'), sg.Multiline('output', key='output')],
+        [sg.Button('Enter'), sg.Button('Close'), sg.Checkbox('Print results to file', key='printToFile', pad=((500,3),3))]]
+    tab2_layout = [
+        [sg.Button('Build LR items', key='createParsingTable'), sg.Text('Parse:', pad=((260,3),3)), sg.InputText(key='text_to_parse',size=(25, 1)), sg.Button('Validate input', key='validateInput')],
+        [sg.Text('LR Items:'),  sg.Text('Input validation:', pad=((312,3),3))],
+        [sg.Multiline('', key='parsing_table'), sg.Multiline('' ,key='input_validation')]
+    ]
+    tab3_layout = [
+        [sg.Button('Build LL(1) table', key='createLLParsingTable'), sg.Text('Parse:', pad=((260,3),3)), sg.InputText(key='ll_text_to_parse',size=(25, 1)), sg.Button('Validate input', key='validateLLInput')],
+        [sg.Text('LL Table:'),  sg.Text('Input validation:', pad=((312,3),3))],
+        [sg.Multiline('', key='ll_parsing_table'), sg.Multiline('' ,key='ll_input_validation')]
+    ]
+    layout = [[sg.TabGroup([[sg.Tab('CFG operations', tab1_layout), sg.Tab('LR Parser', tab2_layout), sg.Tab('LL Parser', tab3_layout)]])],
+              [sg.Input( key='-IN-', default_text='grammar.txt'),sg.FileBrowse('Load CFG',file_types=(('Text files', '*.txt'),), key="fileBrowse",
+        tooltip='Allows to choose text file containing context-free grammar', change_submits=True), sg.Button('Load CFG pattern', key='loadCFGPattern'),
+        sg.Button('Clear windows', key='clearWindows')]
+              ]
 
-         #[sg.Text("Choose a data file:", size=(20, 1)), sg.Input(size=(60, 2)),
-         # sg.FileBrowse(key="filePath", change_submits=True)],
-         #[sg.Text("Is header included?", size=(20, 1)), sg.Radio('Yes', "RADIO",key='radio1', default=True),
-         # sg.Radio('No', "RADIO",key='radio2')],
-         #[sg.Text("Delimiter:", size=(20, 1)), sg.Input(key="delimiter", size=(60,1))],
-         #[sg.Text("Link prediction method:", size=(20, 1)),
-         # sg.Listbox(key="method", values=(['Adamic-Adar', 'Resource Allocation Index', 'Cosine similarity',
-         #                                   'Sorensen Index', 'CAR-based Common Neighbor Index']), size=(60, 6), enable_events=True)],
-         #[sg.Text("Define threshold:", size=(20, 1)), sg.Input(key="threshold", size=(60, 1))],
-         #[sg.T("")],
-         #[sg.Button("Submit", size=(20, 1)), sg.Button("Exit", size=(20, 1))]]
-    window = sg.Window(" Program pro analýzu bezkontextových gramatik - Daniel Merta, MER0103, ak. rok 2021/2022", layout, default_element_size=(50,15))
+    window = sg.Window('Program pro analýzu bezkontextových gramatik - Daniel Merta, MER0103, ak. rok 2021/2022', layout, default_element_size=(50,15), resizable=True, auto_size_buttons=True)
     while True:
         event, values = window.read()
-        window['input'].update(h_utils.readWholeFile(arguments.inputFile))  # nacteni gramatiky do vstupniho okna
-
-        if event == sg.WIN_CLOSED or event == "Exit":
+        print(event, values)
+        if event == sg.WIN_CLOSED or event == 'Close':
             exit()
-        elif event == "Potvrdit":
-            print('jsem tu')
-            window['input'].update(h_utils.readWholeFile(arguments.inputFile)) #nacteni gramatiky do vstupniho okna
-            break
+        elif event == 'loadCFGPattern':
+            window['input'].update(p_utils.printCFGPattern())
+        elif event == 'clearWindows':
+            window['input'].update('')
+            window['output'].update('')
+        elif event == 'Enter':
+            print(values['-IN-'])
 
-    if arguments.first or arguments.follow: #vypocet mnoziny FIRST a FOLLOW
+            window['input'].update(h_utils.readWholeFile(values['-IN-']))
+            data = ''
+            if values['first'] or values['follow']:
+                first, follow, epsilon = firstAndFollow(grammarList, values['first'], values['follow'])  # algoritmus pro pocitani FIRST a FOLLOW
+                if values['first']:
+                    data = p_utils.printFirstToMultiline(first, epsilon)
+                if values['follow']:
+                    data += p_utils.printFollowToMultiline(follow)
+            if values['reduction']:
+                reducedGrammar, isReduced = reduction(grammarList)  # algoritmus pro redukci gramatiky
+                data += p_utils.printReductionInfoToMultiline(isReduced)
+                data += p_utils.printGrammarRulesToMultiline(reducedGrammar)
+            if values['eps']:
+                data += '### odstraneni Epsilon pravidel ###\n'
+                epsRemovedGrammar = epsRulesRemoval(grammarList)  # algoritmus pro odstraneni epsilon pravidel
+                data += p_utils.printGrammarRulesToMultiline(epsRemovedGrammar)  # vypsani pravidel gramatiky
+            window['output'].update(data)  # vypsani vysledku do vystupniho okna
+            if values['printToFile']:
+                f = open('outputFile.txt', 'w')
+                f.write(data)
+                f.close()
+        elif event == 'createParsingTable':
+            reduction(grammarList)  # algoritmus pro redukci gramatiky
+
+            parser = s_utils.LRParser(grammarList)
+            closures = parser.buildClosures()
+            parsingTable = parser.buildParsingTable()
+
+            data = ''
+            data += '### LR polozky ###\n\n'
+            data += p_utils.printClosuresToMultiline(closures)
+
+            data += '\n\n'
+            data += '### LR(0) tabulka ###\n\n'
+            data += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
+
+            window['parsing_table'].update(data)
+
+        elif event == 'validateInput':
+            reduction(grammarList)  # algoritmus pro redukci gramatiky
+
+            parser = s_utils.LRParser(grammarList)
+            closures = parser.buildClosures()
+            parsingTable = parser.buildParsingTable()
+
+            dataLR = ''
+            dataLR += '### LR polozky ###\n\n'
+            dataLR += p_utils.printClosuresToMultiline(closures)
+
+            dataLR += '\n\n'
+            dataLR += '### LR(0) tabulka ###\n\n'
+            dataLR += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
+
+            window['parsing_table'].update(dataLR)
+
+            inputText = values['text_to_parse']
+            if not inputText[-1] == '$': #input must have ending character
+                inputText += '$'
+
+            output = parser.parseLR0Input(inputText)
+
+            data = '### LR(0) validation ###\n'
+            data += "'%s' is %s" % (values['text_to_parse'], output)
+
+            window['input_validation'].update(data)
+
+        elif event == 'createLLParsingTable':
+            first, follow, epsilon = firstAndFollow(grammarList, True, True)
+
+            for nt in grammarList.nonterminals:
+                for key in first:
+                    if key == nt.value:
+                        nt.first = first[key]
+                for key in follow:
+                    if key == nt.value:
+                        nt.follow = follow[key]
+
+            parser = s_utils.LLParser(grammarList)
+
+            parsingTable = parser.buildParsingTable()
+
+            data = ''
+            data += '\n\n'
+            data += '### LL(1) tabulka ###\n\n'
+            data += p_utils.printLLParsingTableToMultiline(grammarList, parsingTable)
+
+            window['ll_parsing_table'].update(data)
+
+        elif event == 'validateLLInput':
+            first, follow, epsilon = firstAndFollow(grammarList, True, True)
+
+            for nt in grammarList.nonterminals:
+                for key in first:
+                    if key == nt.value:
+                        nt.first = first[key]
+                for key in follow:
+                    if key == nt.value:
+                        nt.follow = follow[key]
+
+            parser = s_utils.LLParser(grammarList)
+
+            parsingTable = parser.buildParsingTable()
+
+            data = ''
+            data += '\n\n'
+            data += '### LL(1) tabulka ###\n\n'
+            data += p_utils.printLLParsingTableToMultiline(grammarList, parsingTable)
+
+            window['ll_parsing_table'].update(data)
+
+            inputText = values['ll_text_to_parse']
+            if len(inputText) == 0:
+                data = '### No input provided ###\n'
+                window['ll_input_validation'].update(data)
+            else:
+                if not inputText[-1] == '$': #input must have ending character
+                    inputText += '$'
+
+                output = parser.parseInput(inputText)
+
+                data = '### LL(1) validation ###\n'
+                data += "'%s' is %s" % (values['ll_text_to_parse'], output)
+
+                window['ll_input_validation'].update(data)
+
+
+
+
+    '''if arguments.first or arguments.follow: #vypocet mnoziny FIRST a FOLLOW
         first, follow, epsilon = firstAndFollow(grammarList, arguments.first, arguments.follow) #algoritmus pro pocitani FIRST a FOLLOW
         if arguments.first:
             p_utils.printFirst(first, epsilon) #vypsani mnoziny FIRST
         if arguments.follow:
             p_utils.printFollow(follow) #vypsani mnoziny FOLLOW
     if arguments.reduction: #pocitani redukovane gramatiky
-        p_utils.printMessage('### redukce gramatiky ###')
         reducedGrammar, isReduced = reduction(grammarList) #algoritmus pro redukci gramatiky
         p_utils.printReductionInfo(isReduced) #vypsani informaci o redukci gramatiky
         p_utils.printGrammarRules(reducedGrammar) #vypsani pravidel gramatiky
-        if arguments.epsRemoval: #odstraneni epsilon pravidel z gramatiky
-            p_utils.printMessage('### odstraneni Epsilon pravidel ###')
+    if arguments.epsRemoval: #odstraneni epsilon pravidel z gramatiky
+        p_utils.printMessage('### odstraneni Epsilon pravidel ###')
         epsRemovedGrammar = epsRulesRemoval(grammarList) #algoritmus pro odstraneni epsilon pravidel
         p_utils.printGrammarRules(epsRemovedGrammar) #vypsani pravidel gramatiky
-        window['output'].update(p_utils.printGrammarRules(epsRemovedGrammar))
-
     if not arguments.outputFile: #uzavreni vystupniho souboru, pokud byl zadan v argumentu
-        sys.stdout.close()
-
-
+        sys.stdout.close()'''
 
 if __name__ == '__main__':
     main()
-    sys.exit(0) #uspesny konec programu
+    #sys.exit(0) #uspesny konec programu

@@ -5,7 +5,7 @@ outputFileCreated = 'Program úspěšně vypsal hodnoty do zadaného výstupníh
 
 #funkce vypisujici mnozinu FIRST
 def printFirst(first, epsilon):
-    print('### mnozina FIRST ###')
+    print('### FIRST set ###')
     for key, value in first.items():
         if (key in epsilon):  # pokud je neterminal i v mnozine epsilon, je epsilon v mnozine first daneho neterminalu
             value.add('eps')
@@ -13,7 +13,7 @@ def printFirst(first, epsilon):
 
 #funkce vypisujici mnozinu FIRST do Multiline elementu
 def printFirstToMultiline(first, epsilon):
-    data = '### mnozina FIRST ###\n'
+    data = '### FIRST set ###\n'
     for key, value in first.items():
         if (key in epsilon):  # pokud je neterminal i v mnozine epsilon, je epsilon v mnozine first daneho neterminalu
             value.add('eps')
@@ -24,7 +24,7 @@ def printFirstToMultiline(first, epsilon):
 
 #funkce vypisujici mnozinu FOLLOW
 def printFollow(follow):
-    print('### mnozina FOLLOW ###')
+    print('### FOLLOW set ###')
     for key, value in follow.items():
         if (' ' in value):  # nahrazeni mezery za epsilon pro vypis
             value.remove(' ')
@@ -33,7 +33,7 @@ def printFollow(follow):
 
 #funkce vypisujici mnozinu FOLLOW do Multiline elementu
 def printFollowToMultiline(follow):
-    data = '### mnozina FOLLOW ###\n'
+    data = '### FOLLOW set ###\n'
     for key, value in follow.items():
         if (' ' in value):  # nahrazeni mezery za epsilon pro vypis
             value.remove(' ')
@@ -44,24 +44,24 @@ def printFollowToMultiline(follow):
 
 #funkce vypisujici informaci o zredukovatelnosti gramatiky
 def printReductionInfo(isReduced):
-    print('### redukce gramatiky ###')
+    print('### Reduction ###')
     if isReduced:
-        print('Gramatika je jiz ve zredukovanem tvaru')
+        print('CFG is already reduced')
     else:
-        print('Gramatiku bylo mozne zredukovat')
+        print('CFG has been reduced')
 
 #funkce vypisujici informaci o zredukovatelnosti gramatiky do Multiline elementu
 def printReductionInfoToMultiline(isReduced):
-    data = '### redukce gramatiky ###\n'
+    data = '### Reduction ###\n'
     if isReduced:
-        data += 'Gramatika je jiz ve zredukovanem tvaru\n'
+        data += 'CFG is already reduced\n'
     else:
-        data += 'Gramatiku bylo mozne zredukovat\n'
+        data += 'CFG has been reduced\n'
     return data
 
 #funkce vypisujici jednotlive pravidla gramatiky
 def printGrammarRules(grammar):
-    print('Pravidla gramatiky: ')
+    print('Rules: ')
     previousNonterminal = '' #pomocna promenna pro zjisteni predchoziho neterminalniho symbolu
     for rule in grammar:
         if previousNonterminal != rule[0]:
@@ -80,10 +80,11 @@ def printGrammarRules(grammar):
     print('')
 
 #funkce vypisujici jednotlive pravidla gramatiky do Multiline elementu
-def printGrammarRulesToMultiline(grammar):
-    data = 'Pravidla gramatiky: \n'
+def printGrammarRulesToMultiline(rules):
+    print(rules)
+    data = 'Rules: \n'
     previousNonterminal = '' #pomocna promenna pro zjisteni predchoziho neterminalniho symbolu
-    for rule in grammar:
+    for rule in rules:
         if previousNonterminal != rule[0]:
             if previousNonterminal != '':
                 data += '\n'
@@ -161,4 +162,66 @@ def printParsingTableToMultiline(grammar, parsingTable):
             else:
                 data += "".join("     " for i in range(maxStepLength))
         data += "\n"
+    return data
+
+def printLLParsingTableToMultiline(grammar, parsingTable):
+    data = ''
+
+    for rule in parsingTable['ruleList']:
+        data += '%s. %s->%s \n' % (rule.pointer, rule.leftSide, rule.rightSide[0])
+    data += '\n'
+
+    data += '  '
+    data += "  | "
+    for terminal in grammar.terminals:
+        data += "  %s " % terminal.value
+    data += '  $ | \n'
+
+    for key in parsingTable:
+        if key == 'ruleList':
+            continue
+
+        data += '%s' % key
+        data += " "
+        data += " | "
+        for terminal in grammar.terminals:
+            if terminal.value in parsingTable[key]:
+                rule = parsingTable[key][terminal.value]
+                data += "  %s " % rule.pointer
+            else:
+                data += "    "
+        if '$' in parsingTable[key]:
+            rule = parsingTable[key]['$']
+            data += "  %s " % rule.pointer
+        else:
+            data += "     "
+        data += "| "
+        data += "\n"
+    return data
+
+def printStackAutomaton(grammar):
+    data = ''
+    stateCnt = 0
+
+    data += 'M = (Q,Σ,Γ,δ,q0,Z0)\n'
+    data += 'Q = {'
+    stateList = ['q0']
+    for i in range(len(grammar.terminals)):
+        stateList.append('q%s' % (i+1))
+    data += ','.join(stateList)
+    data += '}\n'
+    data += 'Σ = %s\n' % ','.join(map(lambda nt: nt.value, grammar.terminals))
+    data += 'Γ = %s\n' % ','.join(map(lambda nt: nt.value, grammar.nonterminals + grammar.terminals))
+    data += 'δ = {\n'
+    data += '  q0ε --[ε]-> q0 ε\n'
+    for rule in grammar.rules:
+        for rs in rule.rightSide:
+            data += '  q0%s --[ε]-> q0 %s\n' % (rule.leftSide, rs)
+    for terminal in grammar.terminals:
+        data += '  q%s%s --[ε]-> q%s %s\n' % (stateCnt, terminal.value, stateCnt+1, terminal.value)
+        stateCnt +=1
+    data += '}\n'
+    data += 'q0 = q0\n'
+    data += 'Z0 = %s\n' % grammar.symbol.value
+
     return data
