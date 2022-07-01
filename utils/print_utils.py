@@ -1,6 +1,6 @@
 import sys
 
-helpMessage = '. Pro napovedu spustte program s parametrem -help.'
+helpMessage = '. Check the readme.txt file for more details.'
 outputFileCreated = 'Program úspěšně vypsal hodnoty do zadaného výstupního souboru.'
 
 #funkce vypisujici mnozinu FIRST
@@ -12,13 +12,18 @@ def printFirst(first, epsilon):
         print(key, ':', value)
 
 #funkce vypisujici mnozinu FIRST do Multiline elementu
-def printFirstToMultiline(first, epsilon):
+def printFirstToMultiline(first, epsilon, grammar):
     data = '### FIRST set ###\n'
     for key, value in first.items():
         if (key in epsilon):  # pokud je neterminal i v mnozine epsilon, je epsilon v mnozine first daneho neterminalu
             value.add('eps')
-        print(key, ':', value)
-        values = ', '.join(value)
+        temp = [] #setrizeni terminalu ve vypisu podle poradi na vstupu
+        for i in grammar.terminals:
+            if i.value in value:
+                temp.append(i.value)
+        if 'eps' in value:
+            temp.append('eps') #konec setrizeni terminalu
+        values = ', '.join(temp)
         data += key +' : { ' + values + ' }\n'
     return data
 
@@ -32,13 +37,19 @@ def printFollow(follow):
         print(key, ':', value)
 
 #funkce vypisujici mnozinu FOLLOW do Multiline elementu
-def printFollowToMultiline(follow):
+def printFollowToMultiline(follow, grammar):
     data = '### FOLLOW set ###\n'
     for key, value in follow.items():
         if (' ' in value):  # nahrazeni mezery za epsilon pro vypis
             value.remove(' ')
             value.add('eps')
-        values = ', '.join(value)
+        temp = [] #setrizeni terminalu ve vypisu podle poradi na vstupu
+        for i in grammar.terminals:
+            if i.value in value:
+                temp.append(i.value)
+        if 'eps' in value:
+            temp.append('eps') #konec setrizeni
+        values = ', '.join(temp)
         data += key +' : { ' + values + ' }\n'
     return data
 
@@ -78,27 +89,75 @@ def printGrammarRules(grammar):
                 print(' |',rule[1],end='')
         previousNonterminal = rule[0]
     print('')
+    return
 
 #funkce vypisujici jednotlive pravidla gramatiky do Multiline elementu
-def printGrammarRulesToMultiline(rules):
-    print(rules)
-    data = 'Rules: \n'
-    previousNonterminal = '' #pomocna promenna pro zjisteni predchoziho neterminalniho symbolu
-    for rule in rules:
-        if previousNonterminal != rule[0]:
-            if previousNonterminal != '':
-                data += '\n'
-            if rule[1] == '': #prazdna prava strana znamena eps
-                data += rule[0] + ' -> eps'
+def printReductionGrammarRulesToMultiline(rules, grammar, originRules):
+    sortedRules = 'Rules: \n'
+    temp = [] #pomocna promenna pro serazeni pravidel na vypisu
+    temp2 = [] #pomocna promenna pro serazeni pravidel na vypisu
+    for i in grammar.nonterminals: #iterace pres vsechny neterminaly
+        for key, value in rules: #iterace pres set pravidel
+            if key == i.value: #pri nalezeni pravidla, u nehoz se shoduje neterminal, pridam pravou stranu pravidla do pomocne promenne
+                temp.append(value)
+        for key2, value2 in originRules: #projdu seznam pravych stran puvodnich pravidel a jestlize se vyskytuji v me pomocne promenne
+            if value2 in temp:
+                if value2 == '':
+                    value2 = 'eps'
+                if key2 == i.value:
+                    temp2.append(value2) #pridam pravou stranu do druhe pomocne promenne
+        for key3, value3 in rules: #iteruji pres set pravidel a vytvorim pravidla na zaklade druhe pomocne promenne
+            if key3 == i.value:
+                sortedRules += i.value + ' -> ' + ' | '.join(temp2) + '\n'
+                break
+        temp = []
+        temp2 = []
+    return sortedRules
+
+#funkce vypisujici jednotlive pravidla gramatiky do Multiline elementu
+def printRemovalGrammarRulesToMultiline(rules, grammar):
+    sortedRules = 'Rules: \n'
+    temp = []
+    for i in grammar.nonterminals: #iterace pres vsechny neterminaly
+        for key, value in rules: #iterace pres set pravidel
+            if key == i.value: #pri nalezeni pravidla, u nehoz se shoduje neterminal, pridam pravou stranu pravidla do pomocne promenne
+                temp.append(value)
+        if len(temp) != 0:
+            sortedRules += i.value + ' -> ' + ' | '.join(temp) + '\n'
+        temp = []
+    return sortedRules
+
+def printCFG(grammar):
+    data = 'CFG=' + grammar.name + '\n' #vypsani nazvu CFG
+    data += 'N={' #vypsani neterminalnich symbolu
+    numOfNonterminals = len(grammar.nonterminals) #pocet neterminalu, at muzu overit, ze za poslednim nepisu carku
+    for i in grammar.nonterminals:
+        data += i.value
+        if i.name != (numOfNonterminals - 1): #pridani carky mezi polozky krome posledni
+            data += ', '
+    data += '}\n'
+
+    data += 'T={' #vypsani terminalnich symbolu
+    numOfTerminals = len(grammar.terminals)  #pocet terminalu, at muzu overit, ze za poslednim nepisu carku
+    for j in grammar.terminals:
+        data += j.value
+        if j.name != (numOfTerminals - 1): #pridani carky mezi polozky krome posledni
+            data += ', '
+    data += '}\n'
+
+    data += 'S=' + grammar.symbol.value + '\n' #vypsani pocatecniho symbolu
+
+    data += 'P=' #vypsani pravidel gramatiky
+    for rule in grammar.rules:
+        data += rule.leftSide + ' -> '
+        numOfElements = len(rule.rightSide)
+        for elem in rule.rightSide:
+            #data += elem
+            if numOfElements > 1:
+                data += elem + ' | '
             else:
-                data += rule[0] + ' -> ' + rule[1]
-        else:
-            if rule[1] == '': #prazdna prava strana znamena eps
-                data += ' | eps'
-            else:
-                data += ' | ' + rule[1]
-        previousNonterminal = rule[0]
-    data += '\n'
+                data += elem + '\n'
+            numOfElements -= 1
     return data
 
 def printCFGPattern():
@@ -106,7 +165,7 @@ def printCFGPattern():
 
 def printError(message):
     sys.stderr.write(message + helpMessage)
-    sys.exit(1)
+    #sys.exit(1)
 
 def printMessage(message):
     print(message)
@@ -166,17 +225,14 @@ def printParsingTableToMultiline(grammar, parsingTable):
 
 def printLLParsingTableToMultiline(grammar, parsingTable):
     data = ''
-
     for rule in parsingTable['ruleList']:
         data += '%s. %s->%s \n' % (rule.pointer, rule.leftSide, rule.rightSide[0])
     data += '\n'
-
     data += '  '
     data += "  | "
     for terminal in grammar.terminals:
         data += "  %s " % terminal.value
     data += '  $ | \n'
-
     for key in parsingTable:
         if key == 'ruleList':
             continue
@@ -199,18 +255,17 @@ def printLLParsingTableToMultiline(grammar, parsingTable):
         data += "\n"
     return data
 
-def printStackAutomaton(grammar):
+def printPushdownAutomaton(grammar):
     data = ''
     stateCnt = 0
-
-    data += 'M = (Q,Σ,Γ,δ,q0,Z0)\n'
+    data += 'M = (Q,\u03A3,Γ,δ,q0,Z0)\n'
     data += 'Q = {'
     stateList = ['q0']
     for i in range(len(grammar.terminals)):
         stateList.append('q%s' % (i+1))
     data += ','.join(stateList)
     data += '}\n'
-    data += 'Σ = %s\n' % ','.join(map(lambda nt: nt.value, grammar.terminals))
+    data += '\u03A3 = %s\n' % ','.join(map(lambda nt: nt.value, grammar.terminals))
     data += 'Γ = %s\n' % ','.join(map(lambda nt: nt.value, grammar.nonterminals + grammar.terminals))
     data += 'δ = {\n'
     data += '  q0ε --[ε]-> q0 ε\n'
@@ -223,5 +278,4 @@ def printStackAutomaton(grammar):
     data += '}\n'
     data += 'q0 = q0\n'
     data += 'Z0 = %s\n' % grammar.symbol.value
-
     return data
