@@ -1,3 +1,4 @@
+import utils.struct_utils as s_utils
 #bool funkce kontrolujici, jestli je znak alfanumericky
 def isChar(char):
     return char.isalpha()
@@ -11,18 +12,25 @@ def readCharacter(inputFile):
     return inputFile.read(1)
 
 #funkce cte nasledujici znak ze souboru predaneho v argumentu funkce a posunuje ukazatel o 1 zpet
-def readNextChar(inputFile):
-    nextChar = inputFile.read(1)
-    if nextChar == '': #kontrola konce souboru
-        return ''#konec souboru
-    inputFile.seek(inputFile.tell() - 1,0) #vraceni ukazatele cteni v souboru o 1 zpet
+def readNextChar(inputFile, index):
+    index+=1
+    nextChar = ' '
+    try:
+        while nextChar == ' ':
+            nextChar = inputFile[index]
+            index += 1
+    except:
+        return s_utils.TokenKind.EOF  # konec souboru
     return nextChar
 
 #funkce pro cteni celeho souboru najednou
 def readWholeFile(inputFile):
-    f = open(inputFile, 'r')
-    data = f.read()
-    return data
+    try:
+        f = open(inputFile, 'r')
+        data = f.read()
+        return data
+    except: return
+
 
 #funkce pro inplace update (union) mezi dvema strukturami set
 def union(first, begins):
@@ -53,3 +61,11 @@ def getRulesSet(grammarRules):
                     rule = (i.leftSide, element)
                 rules += (rule,) #vlozeni konkretniho pravidla typu tuple (n-tice)
     return rules
+
+def find_all(a_str, sub):
+    start = 0
+    while True:
+        start = a_str.find(sub, start)
+        if start == -1: return
+        yield start
+        start += len(sub)

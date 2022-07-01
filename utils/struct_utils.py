@@ -1,22 +1,21 @@
 from enum import Enum
-from collections import namedtuple
 specialChars = ['+','*','/','(',')','$']
 
-Arguments = namedtuple('Arguments',['inputFile','outputFile','first','follow','reduction','epsRemoval'])
+sampleCFG = 'cfg = SampleCFG\nN = {S, A, B}\nT = {a, b}\nS = S\nP = S -> aA | bB\nA -> eps\nB -> B | b | eps'
 
 class TokenKind(Enum):
     EOF = 0 #konec souboru ''
     IDENT = 1 #identifikator
     NUM = 2 #cislo
     EQUALS = 3 #rovna se =
-    OpenCurlyBrace = 4 #pocatecni chlupata zavorka {
-    CloseCurlyBrace = 5 #koncova chlupata zavorka }
-    PIPE = 6 #pajpa |
+    OpenCurlyBrace = 4 #pocatecni slozena zavorka {
+    CloseCurlyBrace = 5 #koncova slozena zavorka }
+    PIPE = 6 #svisla cara |
     COMMA = 7 #carka ,
     ARROW = 8 #sipka ->
     EOL = 9 #konec radku \n
     OtherChar = 10 #jiny znak
-    ERROR = 11
+    ERROR = 11 #chyba parsovani
 
 #trida definujici terminalni symbol
 class Terminal:
@@ -64,7 +63,7 @@ class Grammar:
         self.name = name
             #self.value = value
     def __str__(self):
-        return "From str method of Grammar: nonterminaly jsou % s, terminaly jsou % s" % (self.nonterminals, self.terminals)
+        return "From str method of Grammar: nonterminals are % s, terminals are % s" % (self.nonterminals, self.terminals)
     def addTerminal(self,terminal):
         self.terminals.append(terminal)
     def addNonterminal(self,nonterminal):
@@ -170,7 +169,7 @@ class LRParser: #trida LR parseru
             self.parsingTable[key] = {}
             for rule in self.closures[key].rules:
                 if rule.goto == '' and rule.rightSide[0] == self.grammar.symbol.value:
-                    self.parsingTable[key]['$'] = "acp"
+                    self.parsingTable[key]['$'] = "acp" #koncovy stav
                     continue
                 if rule.goto == '': #finalni polozky
                     for terminal in self.grammar.terminals:
@@ -278,7 +277,7 @@ class LLParser:
         pointer = 0
         stack = [self.grammar.symbol.value] #prvni na zasobniku je pocatecni symbol
         while(len(stack) > 0):
-            print(stack)
+            #print(stack)
             top = stack[-1] #nacteni vrcholu zasobniku
             inputSymbol = inputText[pointer] #ukazatel aktualni pozice
             if top == inputSymbol: #byl najit terminal

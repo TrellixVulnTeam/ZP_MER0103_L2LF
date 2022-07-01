@@ -1,6 +1,8 @@
-cfg=grammar6
-N={S,A}
-T={a,b}
+cfg=grammar1
+N={S,A,B,C}
+T={a,b,+,(,),$}
 S=S
-P=S->AA
-A->aA|b
+P=S->C$
+A->b|eps
+B->+S|eps
+C->A(C)|aB

@@ -1,3 +1,12 @@
+# pattern #
+cfg = sampleCFG
+N = {S, A, B}
+T = {a, b}
+S = S
+P = S -> aA | bB
+A -> eps
+B -> B | b | eps
+
 #first a follow demo 1 #
 cfg=grammar1
 N={S,A,B,C}
@@ -58,7 +67,27 @@ B->bB|eps
 C->AaA|b
 D->AD|BBB|a
 
-# parsing example
+# simpleRulesRemoval #
+cfg=simpleRulesRemoval
+N = {S, A, B, C, D}
+T = {a, b}
+S = S
+P = S -> AB | C
+A -> a | bA
+B -> C | b
+C -> D | AA | AaA
+D -> B | ABb
+
+# Chomsky normal form #
+cfg=CNF
+N = {S, A, B}
+T = {a, b}
+S = S
+P = S -> ASA | aB
+A -> B | S
+B -> b | eps
+
+# parsing example #
 cfg=grammar6
 N={S,A}
 T={a,b}
@@ -66,7 +95,7 @@ S=S
 P=S->AA
 A->aA|b
 
-# scitani / nasobeni
+# scitani / nasobeni #
 cfg=grammar7
 N={S,A}
 T={*,+,a,b}
@@ -74,7 +103,7 @@ S=S
 P=S->S*A|S+A|A
 A->a|b
 
-# LL parser
+# LL parser #
 cfg=grammar8
 N={E,T,R,S,F}
 T={n,+,*,(,)}
@@ -85,7 +114,7 @@ T->FS
 S->eps|*T
 F->n|(E)
 
-# LL first/first konflikt
+# LL first/first konflikt #
 cfg=grammar9
 N={S,A}
 T={b,a}
@@ -93,7 +122,7 @@ S=S
 P=S->A|Ab
 A->a|eps
 
-# LL first/follow konflikt
+# LL first/follow konflikt #
 cfg=grammar10
 N={S,A}
 T={b,a}
