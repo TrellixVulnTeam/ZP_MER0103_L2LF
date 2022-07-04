@@ -1,7 +1,7 @@
 from enum import Enum
-specialChars = ['+','*','/','(',')','$']
+specialChars = ['+','*','/','(',')','$','-']
 
-sampleCFG = 'cfg = SampleCFG\nN = {S, A, B}\nT = {a, b}\nS = S\nP = S -> aA | bB\nA -> eps\nB -> B | b | eps'
+sampleCFG = 'CFG = SampleCFG\nN = {S, A, B}\nT = {a, b}\nS = S\nP = S -> aA | bB\nA -> eps\nB -> B | b | eps'
 
 class TokenKind(Enum):
     EOF = 0 #konec souboru ''
@@ -50,6 +50,10 @@ class Rule:
         self.count = len(rightSide)
         self.pointer = 0
         self.goto = ''
+
+    def addRightSide(self, rightSide):
+        # rightSide [Nonterminal, Terminal]
+        self.rightSide.append(rightSide);
 
 #trida definujici bezkontextovou gramatiku
 class Grammar:

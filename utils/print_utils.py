@@ -118,18 +118,29 @@ def printReductionGrammarRulesToMultiline(rules, grammar, originRules):
 def printRemovalGrammarRulesToMultiline(rules, grammar):
     sortedRules = 'Rules: \n'
     temp = []
-    for i in grammar.nonterminals: #iterace pres vsechny neterminaly
+    nonterminals = []
+    #print('cago belo rules', rules )
+    for nonterminal in grammar.nonterminals:
+        nonterminals.append(nonterminal.value)
+    for nt, expression in rules:
+        if nt not in nonterminals:
+            #print("novy nt:", nt)
+            nonterminals.append(nt)
+    #print('moje neterminaly:', nonterminals)
+    nonterminalsWithoutDuplicates = []
+    [nonterminalsWithoutDuplicates.append(x) for x in nonterminals if x not in nonterminalsWithoutDuplicates] #odstraneni duplicitnich pravidel
+    for i in nonterminalsWithoutDuplicates: #iterace pres vsechny neterminaly
         for key, value in rules: #iterace pres set pravidel
-            if key == i.value: #pri nalezeni pravidla, u nehoz se shoduje neterminal, pridam pravou stranu pravidla do pomocne promenne
+            if key == i: #pri nalezeni pravidla, u nehoz se shoduje neterminal, pridam pravou stranu pravidla do pomocne promenne
                 temp.append(value)
         if len(temp) != 0:
-            sortedRules += i.value + ' -> ' + ' | '.join(temp) + '\n'
+            sortedRules += i + ' -> ' + ' | '.join(temp) + '\n'
         temp = []
     return sortedRules
 
 def printCFG(grammar):
-    data = 'CFG=' + grammar.name + '\n' #vypsani nazvu CFG
-    data += 'N={' #vypsani neterminalnich symbolu
+    data = 'CFG = ' + grammar.name + '\n' #vypsani nazvu CFG
+    data += 'N = {' #vypsani neterminalnich symbolu
     numOfNonterminals = len(grammar.nonterminals) #pocet neterminalu, at muzu overit, ze za poslednim nepisu carku
     for i in grammar.nonterminals:
         data += i.value
@@ -137,7 +148,7 @@ def printCFG(grammar):
             data += ', '
     data += '}\n'
 
-    data += 'T={' #vypsani terminalnich symbolu
+    data += 'T = {' #vypsani terminalnich symbolu
     numOfTerminals = len(grammar.terminals)  #pocet terminalu, at muzu overit, ze za poslednim nepisu carku
     for j in grammar.terminals:
         data += j.value
@@ -145,9 +156,9 @@ def printCFG(grammar):
             data += ', '
     data += '}\n'
 
-    data += 'S=' + grammar.symbol.value + '\n' #vypsani pocatecniho symbolu
+    data += 'S = ' + grammar.symbol.value + '\n' #vypsani pocatecniho symbolu
 
-    data += 'P=' #vypsani pravidel gramatiky
+    data += 'P = ' #vypsani pravidel gramatiky
     for rule in grammar.rules:
         data += rule.leftSide + ' -> '
         numOfElements = len(rule.rightSide)
