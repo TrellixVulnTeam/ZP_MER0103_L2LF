@@ -227,20 +227,26 @@ def loadAndParseData(inputString):
 def main():
     global index, grammarList
     sg.theme('LightGrey2')  #barevne schema aplikace
-    tab1_layout = [[sg.Checkbox('FIRST', key='first'), sg.Checkbox('FOLLOW', key='follow'), sg.Checkbox('Reduction', key='reduction'),sg.Checkbox('Epsilon removal', key='eps'), sg.Checkbox('Simple rules removal', key='srr'), sg.Checkbox('Chomsky NF', key='cnf'), sg.Checkbox('Greibach NF', key='gnf'), sg.Checkbox('Construct PDA', key='constructPDA'), sg.Button('Enter', key='Enter')],
-                   [sg.Text(' Input'),sg.Text(' Output', pad=((342,3),3))],
-                   [sg.Multiline('Load grammar via the Load CFG button', key='input'), sg.Multiline('', key='output')]]
+    tab1_layout = [[sg.Checkbox('FIRST', key='first'), sg.Checkbox('FOLLOW', key='follow'), sg.Checkbox('Reduction', key='reduction'),sg.Checkbox('Epsilon removal', key='eps'), sg.Checkbox('Simple rules removal', key='srr'), sg.Checkbox('Chomsky NF', key='cnf'), sg.Checkbox('Greibach NF', key='gnf'), sg.Checkbox('Construct PDA', key='constructPDA')],
+                   [sg.Text(' Input'), sg.Text('                             Output'), sg.Checkbox('Show interim results', key='interimResults',size_px=(150,25)), sg.Button('Enter', key='Enter', size_px=(60,25))],
+                   [sg.Multiline('', key='input'), sg.Multiline('', key='output')],
+                   [sg.Text('Include:'),sg.Checkbox('Input', key='includeInput1stTab', pad=((0,3),3)), sg.Checkbox('Output', key='includeOutput1stTab'), sg.FileSaveAs('Save data', key='saveDataToTXT1stTab',target='saveData1stTab',file_types=(("Text Files", "*.txt"),), change_submits=True), sg.Input('', key='saveData1stTab', enable_events=True, disabled=True)]]
     tab2_layout = [[sg.Button('Build LR items', key='createParsingTable', disabled=True), sg.Text('Parse string:', pad=((260,3),3)), sg.Input(key='text_to_parse'), sg.Button('Validate input', key='validateInput', disabled=True)],
-                   [sg.Text(' LR Items and Table:'),  sg.Text(' Output:', pad=((312,3),3))],
-                   [sg.Multiline('Load grammar via the Load CFG button', key='parsing_table'), sg.Multiline('' , key='input_validation')]]
+                   [sg.Text(' Input:'),  sg.Text(' Output:', pad=((312,3),3))],
+                   [sg.Multiline('', key='parsing_table'), sg.Multiline('' , key='input_validation')],
+                   [sg.Text('Include:'),sg.Checkbox('Input', key='includeInput2ndTab', pad=((0,3),3)), sg.Checkbox('Output', key='includeOutput2ndTab'), sg.FileSaveAs('Save data', key='saveDataToTXT2ndTab',target='saveData2ndTab',file_types=(("Text Files", "*.txt"),), change_submits=True), sg.Input('', key='saveData2ndTab', enable_events=True, disabled=True)]]
     tab3_layout = [[sg.Button('Build LL(1) table', key='createLLParsingTable', disabled=True), sg.Text('Parse string:', pad=((260,3),3)), sg.Input(key='ll_text_to_parse'), sg.Button('Validate input', key='validateLLInput', disabled=True)],
-                   [sg.Checkbox('Detect conflicts', key='ll_conflicts')],
-                   [sg.Text(' LL Table:'),  sg.Text(' Output:', pad=((312,3),3))],
-                   [sg.Multiline('Load grammar via the Load CFG button', key='ll_parsing_table'), sg.Multiline('' ,key='ll_input_validation')]]
+                   [sg.Text(' Input:'),  sg.Text(' Output:', pad=((312,3),3))],
+                   [sg.Multiline('', key='ll_parsing_table'), sg.Multiline('' ,key='ll_input_validation')],
+                   [sg.Text('Include:'), sg.Checkbox('Input', key='includeInput3rdTab', pad=((0, 3), 3)),
+                    sg.Checkbox('Output', key='includeOutput3rdTab'),
+                    sg.FileSaveAs('Save data', key='saveDataToTXT3rdTab', target='saveData3rdTab',
+                                  file_types=(("Text Files", "*.txt"),), change_submits=True),
+                    sg.Input('', key='saveData3rdTab', enable_events=True, disabled=True)]]
     layout = [[sg.Input( key='-IN-', default_text='grammar.txt', enable_events=True, disabled=True),sg.FileBrowse('Load CFG',file_types=(('Text files', '*.txt'),), key="fileBrowse",
-                                                                                                                  tooltip='Allows to choose text file containing context-free grammar', change_submits=True), sg.Button('Insert pattern', key='insertPattern') , sg.Button('Clear windows', key='clearWindows')],
+                                                                                                                  tooltip='Allows to choose text file containing context-free grammar', change_submits=True), sg.Button('Insert sample CFG', key='insertSampleCFG') , sg.Button('Clear windows', key='clearWindows')],
               [sg.TabGroup([[sg.Tab('CFG operations', tab1_layout), sg.Tab('LR(0) Parser', tab2_layout), sg.Tab('LL(1) Parser', tab3_layout)]])],
-              [sg.Checkbox('Print results to file', key='printToFile', pad=((0,3),3)), sg.FileSaveAs('Save data',file_types=(("Text Files", "*.txt"),) ) ,sg.Button('Close', pad=((160,3),3))]]
+              [sg.Button('Close program', pad=((400,400),3))]]
 
     window = sg.Window('Program pro analýzu bezkontextových gramatik - Daniel Merta, MER0103, ak. rok 2021/2022', layout, default_element_size=(50,15), resizable=True, auto_size_buttons=True)
     while True: #nekonecna smycka behu programu
@@ -249,7 +255,7 @@ def main():
         if event == '-IN-': #byl vybran soubor s CFG, aktualizuj okna
             inputString = h_utils.readWholeFile(values['-IN-'])
             index = 0
-            grammarList = [] #mozno vymazat!
+            grammarList = []
             print(type(grammarList))
             grammarList = loadAndParseData(inputString)
             try:
@@ -267,11 +273,13 @@ def main():
             except:
                 window['input'].update('Parsing grammar error. See the readme.txt file for the correct syntax of input file.')
 
-        elif event == sg.WIN_CLOSED or event == 'Close': #ukonceni programu
+        elif event == sg.WIN_CLOSED or event == 'Close program': #ukonceni programu
             return
             #exit()
-        elif event == 'insertPattern':
+        elif event == 'insertSampleCFG':
             window['input'].update(s_utils.sampleCFG)
+            window['parsing_table'].update(s_utils.sampleCFG)
+            window['ll_parsing_table'].update(s_utils.sampleCFG)
         elif event == 'clearWindows': #stisknuti tlacitka vymazani obsahu oken
             window['input'].update('')
             window['output'].update('')
@@ -304,30 +312,39 @@ def main():
                 if values['follow']:
                     data += p_utils.printFollowToMultiline(follow, grammarList)
             if values['reduction']: #byl vybran prepinac redukce
-                reducedGrammar, isReduced, originRules = f_utils.reduction(grammarList)  # algoritmus pro redukci gramatiky
+                reducedGrammar, isReduced, originRules, setT, setD = f_utils.reduction(grammarList)  # algoritmus pro redukci gramatiky
                 data += p_utils.printReductionInfoToMultiline(isReduced)
                 data += p_utils.printReductionGrammarRulesToMultiline(reducedGrammar, grammarList, originRules)
+                if values['interimResults']:
+                    data += 'set T = ' + str(setT) + '\nset D = ' + str(setD) + '\n'
             if values['eps']: #byl vybran prepinac odstraneni epsilon pravidel
                 data += '### Epsilon rules removal ###\n'
-                epsRemovedGrammar = f_utils.epsRulesRemoval(grammarList, False)  # algoritmus pro odstraneni epsilon pravidel
+                epsRemovedGrammar, setE = f_utils.epsRulesRemoval(grammarList, False)  # algoritmus pro odstraneni epsilon pravidel
                 data += p_utils.printRemovalGrammarRulesToMultiline(epsRemovedGrammar, grammarList)  # vypsani pravidel gramatiky
+                if values['interimResults']:
+                    data += 'set E = ' + str(setE) + '\n'
             if values['srr']: #byl vybran prepinac odstraneni jednoduchych pravidel
                 data += '### Simple rules removal ###\n'
-                removedEpsRules = f_utils.epsRulesRemoval(grammarList, False) #na vstupu musi byt CFG bez epsilon pravidel, proto je odstranime
-                removedSimpleRules = f_utils.simpleRulesRemoval(removedEpsRules, grammarList) #funkce odstranujici jednoduche pravidla
+                removedEpsRules, setE = f_utils.epsRulesRemoval(grammarList, False) #na vstupu musi byt CFG bez epsilon pravidel, proto je odstranime
+                removedSimpleRules, setN = f_utils.simpleRulesRemoval(removedEpsRules, grammarList) #funkce odstranujici jednoduche pravidla
                 data += p_utils.printRemovalGrammarRulesToMultiline(removedSimpleRules, grammarList)
+                if values['interimResults']:
+                    data += setN + '\n'
             if values['cnf']: #byl vybran prepinac prevodu do Chomskeho normalni formy
                 data += '### Chomsky Normal Form ###\n'
                 shortenedRules = f_utils.convertToCNF(grammarList)
-                removedEpsShortenedRules = f_utils.epsRulesRemoval(grammarList, shortenedRules)
-                removedEpsSimpleShortenedRules = f_utils.simpleRulesRemoval(removedEpsShortenedRules, grammarList)
+                removedEpsShortenedRules, setE = f_utils.epsRulesRemoval(grammarList, shortenedRules)
+                removedEpsSimpleShortenedRules, setN = f_utils.simpleRulesRemoval(removedEpsShortenedRules, grammarList)
                 rulesInCNF = f_utils.substituteTerminals(removedEpsSimpleShortenedRules, grammarList)
                 data += p_utils.printRemovalGrammarRulesToMultiline(rulesInCNF,grammarList)
+                if values['interimResults']:
+                    data += 'set E = ' + str(setE) + '\n'
+                    data += setN + '\n'
             if values['gnf']:
                 data += '### Greibach Normal Form ###\n'
                 shortenedRules = f_utils.convertToCNF(grammarList)
-                removedEpsShortenedRules = f_utils.epsRulesRemoval(grammarList, shortenedRules)
-                removedEpsSimpleShortenedRules = f_utils.simpleRulesRemoval(removedEpsShortenedRules, grammarList)
+                removedEpsShortenedRules, setE = f_utils.epsRulesRemoval(grammarList, shortenedRules)
+                removedEpsSimpleShortenedRules, setN = f_utils.simpleRulesRemoval(removedEpsShortenedRules, grammarList)
                 rulesInCNF = f_utils.substituteTerminals(removedEpsSimpleShortenedRules, grammarList)
                 rulesInGNF = f_utils.convertToGNF(rulesInCNF, grammarList)
                 #data += p_utils.printRemovalGrammarRulesToMultiline(rulesInGNF,grammarList)
@@ -335,54 +352,56 @@ def main():
                 data += '### Pushdown automaton: ###\n'
                 data += p_utils.printPushdownAutomaton(grammarList)
             window['output'].update(data)  # vypsani vysledku do vystupniho okna
-            if values['printToFile']: #vypis vysledku do souboru
-                f = open('outputFile.txt', 'w', encoding="utf-8")
-                f.write(data)
-                f.close()
-
         elif event == 'createParsingTable':
             f_utils.reduction(grammarList) #algoritmus pro redukci gramatiky
             parser = s_utils.LRParser(grammarList)
             closures = parser.buildClosures()
             parsingTable = parser.buildParsingTable()
-            data = ''
-            data += '### LR items ###\n'
-            data += p_utils.printClosuresToMultiline(closures)
-            data += '### LR(0) table ###\n'
-            data += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
-            window['input_validation'].update(data)
-            if values['printToFile']: #vypis vysledku do souboru
-                f = open('outputFile.txt', 'w')
-                f.write(data)
-                f.close()
 
+            conflicts = parser.conflicts
+
+            data = ''
+
+            if bool(conflicts):
+                print("CONFLICTS", conflicts)
+                data += "Found conflicts, grammar is not valid LR\n"
+                window['input_validation'].update(data)
+            else:
+                data += '### LR items ###\n'
+                data += p_utils.printClosuresToMultiline(closures)
+                data += '### LR(0) table ###\n'
+                data += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
+                window['input_validation'].update(data)
         elif event == 'validateInput':
             f_utils.reduction(grammarList)  # algoritmus pro redukci gramatiky
             parser = s_utils.LRParser(grammarList)
             closures = parser.buildClosures()
             parsingTable = parser.buildParsingTable()
-            dataLR = ''
-            dataLR += '### LR items ###\n'
-            dataLR += p_utils.printClosuresToMultiline(closures)
-            dataLR += '### LR(0) table ###\n'
-            dataLR += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
-            inputText = values['text_to_parse']
-            if len(inputText) == 0:
-                data = '### No input provided ###\n\n'
-                data += dataLR
+            conflicts = parser.conflicts
+
+            if bool(conflicts):
+                print("CONFLICTS", conflicts)
+                data += "Found conflicts, grammar is not valid LR\n"
                 window['input_validation'].update(data)
             else:
-                if not inputText[-1] == '$': #input must have ending character
-                    inputText += '$'
-                output = parser.parseLR0Input(inputText)
-                data = '### LR(0) validation ###\n'
-                data += "'%s' is %s\n\n" % (values['text_to_parse'], output)
-                data += dataLR
-                window['input_validation'].update(data)
-                if values['printToFile']: #vypis vysledku do souboru
-                    f = open('outputFile.txt', 'w')
-                    f.write(data)
-                    f.close()
+                dataLR = ''
+                dataLR += '### LR items ###\n'
+                dataLR += p_utils.printClosuresToMultiline(closures)
+                dataLR += '### LR(0) table ###\n'
+                dataLR += p_utils.printParsingTableToMultiline(grammarList, parsingTable)
+                inputText = values['text_to_parse']
+                if len(inputText) == 0:
+                    data = '### No input provided ###\n\n'
+                    data += dataLR
+                    window['input_validation'].update(data)
+                else:
+                    if not inputText[-1] == ';': #input must have ending character
+                        inputText += ';'
+                    output = parser.parseLR0Input(inputText)
+                    data = '### LR(0) validation ###\n'
+                    data += "'%s' is %s\n\n" % (values['text_to_parse'], output)
+                    data += dataLR
+                    window['input_validation'].update(data)
 
         elif event == 'createLLParsingTable':
             first, follow, epsilon = f_utils.firstAndFollow(grammarList, True, True)
@@ -418,11 +437,6 @@ def main():
                 data += '### LL(1) table ###\n'
                 data += p_utils.printLLParsingTableToMultiline(grammarList, parsingTable)
                 window['ll_input_validation'].update(data)
-            if values['printToFile']: #vypis vysledku do souboru
-                f = open('outputFile.txt', 'w')
-                f.write(data)
-                f.close()
-
         elif event == 'validateLLInput':
             first, follow, epsilon = f_utils.firstAndFollow(grammarList, True, True)
             for nt in grammarList.nonterminals:
@@ -464,17 +478,61 @@ def main():
                     data += dataLL
                     window['ll_input_validation'].update(data)
                 else:
-                    if not inputText[-1] == '$': #input must have ending character
-                        inputText += '$'
+                    if not inputText[-1] == ';': #input must have ending character
+                        inputText += ';'
                     output = parser.parseInput(inputText)
                     data = '### LL(1) validation ###\n'
                     data += "'%s' is %s\n\n" % (values['ll_text_to_parse'], output)
                     data += dataLL
                     window['ll_input_validation'].update(data)
-                    if values['printToFile']: #vypis vysledku do souboru
-                        f = open('outputFile.txt', 'w')
-                        f.write(data)
-                        f.close()
+        elif event == 'saveData1stTab':
+            if (values['saveData1stTab'] != ''):
+                dataToSave = ''
+                if values['includeInput1stTab'] and values['includeOutput1stTab']:
+                    dataToSave += '=== INPUT ===\n' + values['input'] + '\n\n'
+                    dataToSave += '=== OUTPUT ===\n' + values['output']
+                elif values['includeInput1stTab'] and not values['includeOutput1stTab']:
+                    dataToSave += '=== INPUT ===\n' + values['input']
+                elif values['includeOutput1stTab'] and not values['includeInput1stTab']:
+                    dataToSave += '=== OUTPUT ===\n' + values['output']
+                try:
+                    f = open(values['saveData1stTab'], 'w', encoding="utf-8")
+                    f.write(dataToSave)
+                    f.close()
+                except:
+                    values['saveData1stTab'] = ''
+        elif event == 'saveData2ndTab':
+            if (values['saveData2ndTab'] != ''):
+                dataToSave = ''
+                if values['includeInput2ndTab'] and values['includeOutput2ndTab']:
+                    dataToSave += '=== INPUT ===\n' + values['parsing_table'] + '\n\n'
+                    dataToSave += '=== OUTPUT ===\n' + values['input_validation']
+                elif values['includeInput2ndTab'] and not values['includeOutput2ndTab']:
+                    dataToSave += '=== INPUT ===\n' + values['parsing_table']
+                elif values['includeOutput2ndTab'] and not values['includeInput2ndTab']:
+                    dataToSave += '=== OUTPUT ===\n' + values['input_validation']
+                try:
+                    f = open(values['saveData2ndTab'], 'w', encoding="utf-8")
+                    f.write(dataToSave)
+                    f.close()
+                except:
+                    values['saveData2ndTab'] = ''
+        elif event == 'saveData3rdTab':
+            if (values['saveData3rdTab'] != ''):
+                dataToSave = ''
+                if values['includeInput3rdTab'] and values['includeOutput3rdTab']:
+                    dataToSave += '=== INPUT ===\n' + values['ll_parsing_table'] + '\n\n'
+                    dataToSave += '=== OUTPUT ===\n' + values['ll_input_validation']
+                elif values['includeInput3rdTab'] and not values['includeOutput3rdTab']:
+                    dataToSave += '=== INPUT ===\n' + values['ll_parsing_table']
+                elif values['includeOutput3rdTab'] and not values['includeInput3rdTab']:
+                    dataToSave += '=== OUTPUT ===\n' + values['ll_input_validation']
+                try:
+                    f = open(values['saveData3rdTab'], 'w', encoding="utf-8")
+                    f.write(dataToSave)
+                    f.close()
+                except:
+                    values['saveData3rdTab'] = ''
 if __name__ == '__main__':
     main()
     sys.exit(0) #uspesny konec programu

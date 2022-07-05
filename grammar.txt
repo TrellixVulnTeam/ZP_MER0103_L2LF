@@ -1,8 +1,7 @@
-CFG = GNF
-N = {S, A ,B ,C}
-T = {a, b}
+cfg=chybaLR0
+N = {S, E, T}
+T = {@, +, i, (, )}
 S = S
-P = S -> CA | BB
-B -> b | SB
-C -> b
-A -> a
+P = S->E@
+E->E+T|T
+T->i|(E
