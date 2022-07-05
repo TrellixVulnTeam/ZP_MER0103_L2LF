@@ -29,9 +29,7 @@ def firstAndFollow(grammarList, computeFirst, computeFollow):
         for nt, expression in rules:
             if computeFirst or computeFollow: #vypocet mnoziny FIRST
                 r = expression.split(' ')
-                print('rrr:', r)
                 if (len(r) == 1 and expression not in nonTerminals):
-                    print('tu')
                     if expression == 'eps':
                         expression = ''
                     for symbol in expression:
@@ -41,7 +39,6 @@ def firstAndFollow(grammarList, computeFirst, computeFollow):
                     else:
                         updated |= h_utils.union(epsilon, {nt})
                 else:
-                    print('ta')
                     for symbol in r:
                         updated |= h_utils.union(first[nt], first[symbol])
                         if symbol not in epsilon:
@@ -72,9 +69,6 @@ def firstAndFollow(grammarList, computeFirst, computeFollow):
                         else:
                             aux = first[symbol]
         if not updated: #pokud v poslednim cyklu nebyly pridany zadne nove symboly do mnozin, funkce konci vypocet a navraci vypoctene mnoziny
-            print('MOJE FIRST: ')
-            print(first)
-            print(epsilon)
             return first, follow, epsilon
 
 #funkce pro redukci gramatiky
@@ -156,12 +150,12 @@ def reduction(grammarList):
     #pokud je pocet puvodnich pravidel stejny jako pocet pravidel po algoritmu redukce -> gramatika je jiz v redukovanem tvaru
     if(len(finalListOfRules) == len(rules)):
         isReduced = True
-        return rules, isReduced, rules
+        return rules, isReduced, rules, T_validNonterminals, D_reachableNonterminals
     #gramatika byla zredukovana
     else:
         isReduced = False
         grammarList.setNewRulesFromTupleList(finalListOfRules)
-        return set(finalListOfRules), isReduced, rules
+        return set(finalListOfRules), isReduced, rules, T_validNonterminals, D_reachableNonterminals
 
 #funkce pro odstraneni epsilon pravidel z gramatiky
 def epsRulesRemoval(grammar, rules):
@@ -180,13 +174,11 @@ def epsRulesRemoval(grammar, rules):
         print('mam tyto neterminaly: ', nonterminals)
         if expression == '': #pridam do mnoziny E neterminal, ktery lze prepsat na epsilon
             setE.update(nt)
-        print('srna')
     else: #volani pouze Epsilon removal nebo Simple rules removal
         for rule in grammar.rules:
             if ('Îµ' in rule.rightSide or 'epsilon' in rule.rightSide or 'eps' in rule.rightSide):  # ε
                 setE.update(rule.leftSide)
         rules = h_utils.getRulesSet(grammar.rules)
-        print('jelen')
     print('pracuji s timto setem neterminalu a terminalu: ', nonterminals, terminals)
 
     print('rules set:', rules)
@@ -209,6 +201,21 @@ def epsRulesRemoval(grammar, rules):
         if changed == len(setE):
             updated = False
     print('mnozina E = ',setE)
+    idxCount = 0
+    if grammar.symbol.value in setE: #jestlize se pocatecni symbol nachazi v mnozine E, pridavam novy neterminalni symbol umoznujici prepis na epsilon a prepis na pocatecni symbol CFG
+        newNonterminal = grammar.symbol.value + str(idxCount)
+        while newNonterminal in nonterminals: #pokud se neterminal Y1 nebo vyssi cislo jiz nachazi v mnozine neterminalu, inkrementiji citac a pokracuji az kdyz naleznu novy mozny neterminal
+            idxCount += 1
+            newNonterminal = grammar.symbol.value + str(idxCount)
+            continue
+        newRule = (newNonterminal, 'eps')
+        newRule2 = (newNonterminal, grammar.symbol.value)
+        finalRules.append(newRule)
+        finalRules.append(newRule2)
+        finalRules
+        print('pojd mi hop')
+        print(grammar.symbol.value)
+
     print('rulessssssssss: ',rules)
     rulesWithoutEps = list(rules)
     for item in rulesWithoutEps:
@@ -240,8 +247,6 @@ def epsRulesRemoval(grammar, rules):
             if temp in nonterminals or temp in terminals:
                 listOfCombinations.append(temp)
                 temp = ''
-        #listOfCombinations = list(value)
-        #print(type(listOfCombinations))
         print('listOfCombinations',listOfCombinations)
         combs = []
         print(type(combs))
@@ -278,7 +283,10 @@ def epsRulesRemoval(grammar, rules):
             finalRule = (key, i)
             finalRules.append(finalRule,)
         print('finalRules: ', finalRules)
-    return finalRules
+    finalRulesWithoutDuplicates = []
+    [finalRulesWithoutDuplicates.append(x) for x in finalRules if x not in finalRulesWithoutDuplicates] #odstraneni duplicitnich pravidel
+    print(finalRulesWithoutDuplicates)
+    return finalRulesWithoutDuplicates, setE
 
 def simpleRulesRemoval(rules, grammar):
     print('dostal jsem tyto pravidla ke zjednoduseni: ', rules)
@@ -291,6 +299,7 @@ def simpleRulesRemoval(rules, grammar):
             nonterminals.append(nt)
     nonterminalsWithoutDuplicates = []
     [nonterminalsWithoutDuplicates.append(x) for x in nonterminals if x not in nonterminalsWithoutDuplicates] #odstraneni duplicitnich pravidel
+    setsN = ''
     for i in nonterminalsWithoutDuplicates:
         setN = set()
         setN.add(i) #vlozeni sebe sama do mnoziny
@@ -306,6 +315,8 @@ def simpleRulesRemoval(rules, grammar):
             if changed == len(setN):
                 updated = False
         print('setN ', i, 'je: ', setN) # vypis mnoziny N pro vyukove ucely
+        setsN += 'set N ' + str(i) + ' ' + str(setN) + '\n'
+        setsN = setsN.strip()
         for nt, expression in rules:
             if nt in setN and expression not in setN:
                 finalRule = (i, expression)
@@ -314,7 +325,7 @@ def simpleRulesRemoval(rules, grammar):
     finalRulesWithoutDuplicates = []
     [finalRulesWithoutDuplicates.append(x) for x in finalRules if x not in finalRulesWithoutDuplicates] #odstraneni duplicitnich pravidel
     print(finalRulesWithoutDuplicates)
-    return finalRulesWithoutDuplicates
+    return finalRulesWithoutDuplicates, setsN
 
 def convertToCNF(grammar):
     rules = h_utils.getRulesSet(grammar.rules)
@@ -493,20 +504,22 @@ def convertToGNF(rules, grammar):
                             newRightside = (r[0] + ' ' + r[1])
         newRule = (newLeftside, newRightside)
         renamedRules.append(newRule)
+    print('moje prejmenovane pravidla', renamedRules)
     changed = True
+    counter = 1
     while changed:
         sortedRules = []
         changed = False
-        counter = 0
         for nt, expression in renamedRules:
             print('nt', nt, 'expression', expression, 'nt[1:]',nt[1:])
             compareLeft = nt[1:]
             r = expression.split(' ')
-            if r[0] not in terminals: #pokud zacina prava strana neterminalem, je jiz pravidlo v GNF
+            if r[0] not in terminals: #pokud zacina prava strana terminalem, je jiz pravidlo v GNF
                 if len(r) >= 2:
-                    compareRight = r[0][1:]
                     compareNt = r[0]
-                    print('compareLeft', compareNt, 'compareRight:', compareRight)
+                    compareRight = r[0][1:]
+                    print('compareLeft', compareLeft, 'compareRight:', compareRight)
+                    print('popuju tohle: ',nt, expression, r[0])
                     r.pop(0)
                     if int(compareLeft) > int(compareRight):
                         print('upravuji toto pravidlo:', nt, '+', expression)
@@ -519,13 +532,33 @@ def convertToGNF(rules, grammar):
                                 newRule = (nt,newRightside)
                                 sortedRules.append(newRule)
                                 changed = True
-                    else: #zde bude jeste odstraneni leve rekurze
-                        newRule = (nt,expression)
+                    elif int(compareLeft) == int(compareRight): #odstranuji levou rekurzi
+                        print('odstraneni leve rekurze pro pravidlo', nt, '----->', expression)
+                        newNonterminal = 'W' + str(counter)
+                        newRule = (newNonterminal, ' '.join(r) + ' ' + newNonterminal)
+                        newRule2 = (newNonterminal, ' '.join(r))
                         sortedRules.append(newRule)
+                        sortedRules.append(newRule2)
+                        print('NOVINKA:', newRule)
+                        print('NOVINKA2:', newRule2)
+                        for nt3, expression3 in renamedRules:
+                            if nt3 == nt:
+                                newRule3 = (nt, expression3 + ' ' +newNonterminal)
+                                sortedRules.append(newRule3)
+                                print('NOVINKA3:', newRule3)
+
+
+                        changed = True
+                        counter += 1
+                    else:
+                        newRule = (nt, expression)
+                        sortedRules.append(newRule)
+                else:
+                    newRule = (nt, expression)
+                    sortedRules.append(newRule)
             else:
                 newRule = (nt,expression)
                 sortedRules.append(newRule)
-            counter += 1
         renamedRules = sortedRules
     print('novy seznam:', sortedRules)
 

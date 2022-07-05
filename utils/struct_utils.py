@@ -1,5 +1,5 @@
 from enum import Enum
-specialChars = ['+','*','/','(',')','$','-']
+specialChars = ['+','*','/','(',')','$','-','<','>','^','&','%','#','@','!']
 
 sampleCFG = 'CFG = SampleCFG\nN = {S, A, B}\nT = {a, b}\nS = S\nP = S -> aA | bB\nA -> eps\nB -> B | b | eps'
 
@@ -120,8 +120,12 @@ class LRParser: #trida LR parseru
         self.grammar = grammar
         self.closures = {}
         self.parsingTable = {}
-    def getGotoString(self, pointer, rightSide):
+        self.conflicts = {}
+
+    def getGotoString(self, pointer, rightSide, closureKey):
         if pointer < len(rightSide):
+            if rightSide[pointer].isupper():
+                return "%s%s" % (closureKey, rightSide[pointer])
             return "%s%s" % (rightSide[0:pointer + 1], pointer + 1)
         return ''
 
@@ -132,21 +136,21 @@ class LRParser: #trida LR parseru
             self.closures[closureKey] = Closure()
         if pointer <= len(rightSide):
             if pointer < len(rightSide):
-                if rightSide[pointer].isupper: #musi se do LR itemu rozvest pravidlo
+                if rightSide[pointer].isupper(): #musi se do LR itemu rozvest pravidlo
                     for rule in self.grammar.rules:
                         if rule.leftSide == rightSide[pointer]:
                             for rs in rule.rightSide:
                                 if not self.closures[closureKey].hasRule(self.closures[closureKey].createClosureRule(rule.leftSide, rs, 0, '')): #pridej pouze pokud tam jeste neni
-                                    self.closures[closureKey].appendRule(rule.leftSide, rs, 0, self.getGotoString(0, rs))
+                                    self.closures[closureKey].appendRule(rule.leftSide, rs, 0, self.getGotoString(0, rs, closureKey))
                                     self.extendChain(rule.leftSide, rs, 0, closureKey) #closure se musi dale rozvest
                                 else: #pravidlo je jiz tam
                                     return
 
             if self.closures[closureKey].hasRule(self.closures[closureKey].createClosureRule(leftSide, rightSide, pointer, '')): #pridej pouze pokud tam jeste neni
                 return
-            self.closures[closureKey].appendRule(leftSide, rightSide, pointer, self.getGotoString(pointer, rightSide))
+            self.closures[closureKey].appendRule(leftSide, rightSide, pointer, self.getGotoString(pointer, rightSide, closureKey))
             for rule in self.closures[closureKey].rules:
-                self.extendChain(rule.leftSide, rule.rightSide[0], rule.pointer + 1, self.getGotoString(rule.pointer, rule.rightSide[0]))
+                self.extendChain(rule.leftSide, rule.rightSide[0], rule.pointer + 1, self.getGotoString(rule.pointer, rule.rightSide[0], closureKey))
 
     def buildClosures(self):
         augmentedRule = Rule('augmented', 'S\'', [self.grammar.symbol.value])
@@ -173,18 +177,28 @@ class LRParser: #trida LR parseru
             self.parsingTable[key] = {}
             for rule in self.closures[key].rules:
                 if rule.goto == '' and rule.rightSide[0] == self.grammar.symbol.value:
-                    self.parsingTable[key]['$'] = "acp" #koncovy stav
+                    self.parsingTable[key][';'] = "acp" #koncovy stav
                     continue
                 if rule.goto == '': #finalni polozky
                     for terminal in self.grammar.terminals:
+                        if terminal.value in self.parsingTable[key]:
+                            if self.parsingTable[key][terminal.value][0] == 's': #shift reduce conflict:
+                                self.conflicts[key] = 'SHIFT-REDUCE'
+                                print('KEY SR', key, terminal.value,self.parsingTable[key][terminal.value])
+                            if self.parsingTable[key][terminal.value][0] == 'r': #reduce reduce conflict:
+                                print('KEY RR', key, terminal.value,self.parsingTable[key][terminal.value])
+                                self.conflicts[key] = 'REDUCE-REDUCE'
+
                         self.parsingTable[key][terminal.value] = "r%s-%s" % (rule.leftSide, len(rule.rightSide[0]))
-                    self.parsingTable[key]['$'] = "r%s-%s" % (rule.leftSide, len(rule.rightSide[0]))
+                    self.parsingTable[key][';'] = "r%s-%s" % (rule.leftSide, len(rule.rightSide[0]))
                     continue;
                 expandChar = rule.rightSide[0][rule.pointer]
                 if expandChar.isupper(): #nasleduje se neterminal, akce je GOTO
                     self.parsingTable[key][expandChar] = rule.goto
                     continue
                 else:
+                    if expandChar in self.parsingTable[key] and self.parsingTable[key][expandChar][0] == 'r': # shift-reduce confict
+                        self.conflicts[key] = 'SHIFT-REDUCE'
                     self.parsingTable[key][expandChar] = "s%s" % rule.goto
         return self.parsingTable
 
@@ -260,7 +274,7 @@ class LLParser:
                             for follow in nt.follow:
                                 key = follow
                                 if follow == 'eps' or follow == ' ':
-                                    key = '$'
+                                    key = ';'
                                 self.parsingTable[parsingRule.leftSide][key] = parsingRule
                             continue
                 if len(list(filter (lambda x : x.value == term, self.grammar.terminals))) > 0:

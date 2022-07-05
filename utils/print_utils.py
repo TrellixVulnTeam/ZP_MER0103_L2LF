@@ -204,7 +204,7 @@ def printParsingTableToMultiline(grammar, parsingTable):
     for terminal in grammar.terminals:
         data += "%s  " % terminal.value
         data += ''.join("  " for i in range(maxStepLength - len(terminal.value) + 1))
-    data += '$  | '
+    data += ';  | '
     for nonterminal in grammar.nonterminals:
         data += "%s  " % nonterminal.value
         data += ''.join("  " for i in range(maxStepLength - len(nonterminal.value) + 1))
@@ -219,8 +219,8 @@ def printParsingTableToMultiline(grammar, parsingTable):
                 data += "".join("  " for i in range(maxStepLength))
             else:
                 data += "".join("     " for i in range(maxStepLength))
-        if '$' in parsingTable[key]:
-            data += parsingTable[key]['$']
+        if ';' in parsingTable[key]:
+            data += parsingTable[key][';']
             data += " "
         else:
             data += "".join("     " for i in range(maxStepLength))
@@ -243,7 +243,7 @@ def printLLParsingTableToMultiline(grammar, parsingTable):
     data += "  | "
     for terminal in grammar.terminals:
         data += "  %s " % terminal.value
-    data += '  $ | \n'
+    data += '  ; | \n'
     for key in parsingTable:
         if key == 'ruleList':
             continue
@@ -257,8 +257,8 @@ def printLLParsingTableToMultiline(grammar, parsingTable):
                 data += "  %s " % rule.pointer
             else:
                 data += "    "
-        if '$' in parsingTable[key]:
-            rule = parsingTable[key]['$']
+        if ';' in parsingTable[key]:
+            rule = parsingTable[key][';']
             data += "  %s " % rule.pointer
         else:
             data += "     "
@@ -269,23 +269,19 @@ def printLLParsingTableToMultiline(grammar, parsingTable):
 def printPushdownAutomaton(grammar):
     data = ''
     stateCnt = 0
-    data += 'M = (Q,\u03A3,Γ,δ,q0,Z0)\n'
+    data += 'M = (Q, \u03A3, Γ, δ, q0, Z0)\n'
     data += 'Q = {'
     stateList = ['q0']
-    for i in range(len(grammar.terminals)):
-        stateList.append('q%s' % (i+1))
     data += ','.join(stateList)
     data += '}\n'
-    data += '\u03A3 = %s\n' % ','.join(map(lambda nt: nt.value, grammar.terminals))
-    data += 'Γ = %s\n' % ','.join(map(lambda nt: nt.value, grammar.nonterminals + grammar.terminals))
+    data += '\u03A3 = {%s}\n' % ', '.join(map(lambda nt: nt.value, grammar.terminals))
+    data += 'Γ = {%s}\n' % ', '.join(map(lambda nt: nt.value, grammar.nonterminals + grammar.terminals))
     data += 'δ = {\n'
-    data += '  q0ε --[ε]-> q0 ε\n'
     for rule in grammar.rules:
         for rs in rule.rightSide:
-            data += '  q0%s --[ε]-> q0 %s\n' % (rule.leftSide, rs)
+            data += '  q0 %s --[ε]-> q0 %s\n' % (rule.leftSide, rs)
     for terminal in grammar.terminals:
-        data += '  q%s%s --[ε]-> q%s %s\n' % (stateCnt, terminal.value, stateCnt+1, terminal.value)
-        stateCnt +=1
+        data += '  q0 %s --[%s]-> q0\n' % (terminal.value, terminal.value)
     data += '}\n'
     data += 'q0 = q0\n'
     data += 'Z0 = %s\n' % grammar.symbol.value
