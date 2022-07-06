@@ -1,0 +1,8 @@
+CFG = ARITHEXPR
+N = {S, E, T, F}
+T = {a, +, -, *, /, (, ), $}
+S = S
+P = S -> E$
+E -> T | T+E | T-E
+T -> F | F*T | F/T
+F -> a | -F | (E)
