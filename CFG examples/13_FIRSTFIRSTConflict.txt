@@ -1,0 +1,6 @@
+CFG = FIRSTFIRST
+N = {S, A}
+T = {b, a}
+S = S
+P = S -> A | Ab
+A -> a | eps

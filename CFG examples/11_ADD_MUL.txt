@@ -1,0 +1,6 @@
+CFG = ADD_MUL
+N = {S, A}
+T = {*, +, a, b}
+S = S
+P = S -> S*A | S+A | A
+A -> a | b

@@ -1,0 +1,9 @@
+CFG = SimpleRulesRemoval
+N = {S, A, B, C, D}
+T = {a, b}
+S = S
+P = S -> A B | C
+A -> a | b A
+B -> C | b
+C -> D | A A | A a A
+D -> B | A B b

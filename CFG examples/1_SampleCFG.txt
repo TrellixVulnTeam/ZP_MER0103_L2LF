@@ -1,0 +1,7 @@
+CFG = SampleCFG
+N = {S, A, BB}
+T = {a, b}
+S = S
+P = S -> aA | b BB
+A -> eps
+BB -> A | a

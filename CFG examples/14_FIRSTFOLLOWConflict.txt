@@ -1,0 +1,6 @@
+CFG = FIRSTFOLLOW
+N = {S, A}
+T = {b, a}
+S = S
+P = S -> Aab
+A -> a | eps

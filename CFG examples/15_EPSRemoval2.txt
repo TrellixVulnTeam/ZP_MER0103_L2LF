@@ -1,0 +1,12 @@
+CFG = EPSRULES
+N = {S, A, B, C, D, E, F, G}
+T = {a, b, c, d, e, f, g}
+S = S
+P = S -> ABCD | GFEDCBA
+A -> EFG | a
+B -> eps | b
+C -> eps | c
+D -> eps | d
+E -> eps | e
+F -> eps | f
+G -> eps | g

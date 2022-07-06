@@ -1,0 +1,8 @@
+CFG = GNF
+N = {S, A, B, C}
+T = {a, b}
+S = S
+P = S -> C A | B B
+B -> b | S B
+C -> b
+A -> a

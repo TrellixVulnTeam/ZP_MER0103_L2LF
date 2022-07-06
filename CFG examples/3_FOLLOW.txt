@@ -1,0 +1,8 @@
+CFG=grammar2
+N={S,A,B,C}
+T={a,b,c}
+S=S
+P=S->A B C|a S b
+A->a A b|c|C
+B->B a b B|A A
+C->eps|b a C a b

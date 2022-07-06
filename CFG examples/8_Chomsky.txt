@@ -1,0 +1,7 @@
+CFG = CNF
+N = {S, A, B}
+T = {a, b}
+S = S
+P = S -> A S A | a B
+A -> B | S
+B -> b | eps

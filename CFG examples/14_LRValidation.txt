@@ -1,0 +1,7 @@
+CFG = LRValidation
+N = {S, E, T}
+T = {$, +, i, (, )}
+S = S
+P = S -> E$
+E -> E+T | T
+T -> i | (E)

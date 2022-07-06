@@ -1,0 +1,9 @@
+CFG = REDUCTION
+N = {S, A, B, C, D}
+T = {a, b}
+S = S
+P = S -> AC | B
+A -> aC | AbA
+B -> Ba | BbA | DB
+C -> aa | aBC
+D -> aA | eps

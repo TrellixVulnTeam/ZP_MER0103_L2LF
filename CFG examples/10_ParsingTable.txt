@@ -1,0 +1,6 @@
+CFG = ParsingTable
+N = {S, A}
+T = {a, b}
+S = S
+P = S -> AA
+A -> aA | b

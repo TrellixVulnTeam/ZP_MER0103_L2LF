@@ -1,0 +1,16 @@
+CFG = Reduction2
+N = {A, B, C, D, E, F, G, H, I, J, K, L}
+T = {a, b}
+S = A
+P = A -> aAbE | HC
+B -> DE | EbB
+C -> CaHb | HbFaF
+D -> aBE | EaaD
+E -> AaD | bGB
+F -> baHa | KabaA
+G -> bbG | IbL
+H -> BbK | ab
+I -> bb | aLb
+J -> AabD | bJb
+K -> AbbF | CbH
+L -> aAbLa | aI

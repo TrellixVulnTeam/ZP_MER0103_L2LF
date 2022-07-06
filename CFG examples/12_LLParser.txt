@@ -1,0 +1,9 @@
+CFG = grammar8
+N = {E, T, R, S, F}
+T = {n, +, *, (, )}
+S = E
+P = E -> TR
+R -> eps | +E
+T -> FS
+S -> eps | *T
+F -> n | (E)

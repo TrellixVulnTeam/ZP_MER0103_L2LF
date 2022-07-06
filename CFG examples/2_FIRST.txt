@@ -1,0 +1,8 @@
+CFG = FIRST
+N = {S,A,B,C}
+T = {a,b,+,(,),$}
+S = S
+P = S -> C $
+A -> b | eps
+B -> + S | eps
+C -> A ( C ) | a B

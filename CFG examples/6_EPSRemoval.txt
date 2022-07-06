@@ -1,0 +1,9 @@
+CFG = EPSRemoval
+N = {S, A, B, C, D}
+T = {a, b}
+S = S
+P = S -> A S A | a B C | b
+A -> B D | a A B
+B -> b B | eps
+C -> A a A | b
+D -> A D | B B B | a
