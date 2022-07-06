@@ -1,15 +1,8 @@
 import sys
+from tabulate import tabulate
 
 helpMessage = '. Check the readme.txt file for more details.'
 outputFileCreated = 'Program úspěšně vypsal hodnoty do zadaného výstupního souboru.'
-
-#funkce vypisujici mnozinu FIRST
-def printFirst(first, epsilon):
-    print('### FIRST set ###')
-    for key, value in first.items():
-        if (key in epsilon):  # pokud je neterminal i v mnozine epsilon, je epsilon v mnozine first daneho neterminalu
-            value.add('eps')
-        print(key, ':', value)
 
 #funkce vypisujici mnozinu FIRST do Multiline elementu
 def printFirstToMultiline(first, epsilon, grammar):
@@ -27,15 +20,6 @@ def printFirstToMultiline(first, epsilon, grammar):
         data += key +' : { ' + values + ' }\n'
     return data
 
-#funkce vypisujici mnozinu FOLLOW
-def printFollow(follow):
-    print('### FOLLOW set ###')
-    for key, value in follow.items():
-        if (' ' in value):  # nahrazeni mezery za epsilon pro vypis
-            value.remove(' ')
-            value.add('eps')
-        print(key, ':', value)
-
 #funkce vypisujici mnozinu FOLLOW do Multiline elementu
 def printFollowToMultiline(follow, grammar):
     data = '### FOLLOW set ###\n'
@@ -52,14 +36,6 @@ def printFollowToMultiline(follow, grammar):
         values = ', '.join(temp)
         data += key +' : { ' + values + ' }\n'
     return data
-
-#funkce vypisujici informaci o zredukovatelnosti gramatiky
-def printReductionInfo(isReduced):
-    print('### Reduction ###')
-    if isReduced:
-        print('CFG is already reduced')
-    else:
-        print('CFG has been reduced')
 
 #funkce vypisujici informaci o zredukovatelnosti gramatiky do Multiline elementu
 def printReductionInfoToMultiline(isReduced):
@@ -119,14 +95,11 @@ def printRemovalGrammarRulesToMultiline(rules, grammar):
     sortedRules = 'Rules: \n'
     temp = []
     nonterminals = []
-    #print('cago belo rules', rules )
     for nonterminal in grammar.nonterminals:
         nonterminals.append(nonterminal.value)
     for nt, expression in rules:
         if nt not in nonterminals:
-            #print("novy nt:", nt)
             nonterminals.append(nt)
-    #print('moje neterminaly:', nonterminals)
     nonterminalsWithoutDuplicates = []
     [nonterminalsWithoutDuplicates.append(x) for x in nonterminals if x not in nonterminalsWithoutDuplicates] #odstraneni duplicitnich pravidel
     for i in nonterminalsWithoutDuplicates: #iterace pres vsechny neterminaly
@@ -171,15 +144,8 @@ def printCFG(grammar):
             numOfElements -= 1
     return data
 
-def printCFGPattern():
-    return 'cfg=\nN={,}\nT={,}\nS=\nP=S->'
-
 def printError(message):
     sys.stderr.write(message + helpMessage)
-    #sys.exit(1)
-
-def printMessage(message):
-    print(message)
 
 def insert_pointer(string, index):
     return string[:index] + '.' + string[index:]
@@ -194,77 +160,58 @@ def printClosuresToMultiline(closures):
     return data
 
 def printParsingTableToMultiline(grammar, parsingTable):
-    maxStepLength = 0 # output spacing formatting
-    for key in parsingTable:
-        keyLength = len(key)
-        maxStepLength = keyLength if keyLength > maxStepLength else maxStepLength
-
-    data = ''.join("   " for i in range(maxStepLength))
-    data += " | "
+    indexes = list(parsingTable.keys())
+    columns = []
     for terminal in grammar.terminals:
-        data += "%s  " % terminal.value
-        data += ''.join("  " for i in range(maxStepLength - len(terminal.value) + 1))
-    data += ';  | '
+        columns.append("%s" % terminal.value)
+    columns.append(';')
     for nonterminal in grammar.nonterminals:
-        data += "%s  " % nonterminal.value
-        data += ''.join("  " for i in range(maxStepLength - len(nonterminal.value) + 1))
-    data += "\n"
-    for key in parsingTable:
-        data += '%s' % key
-        data += "".join(" " for i in range(maxStepLength))
-        data += " | "
-        for terminal in grammar.terminals:
-            if terminal.value in parsingTable[key]:
-                data += parsingTable[key][terminal.value]
-                data += "".join("  " for i in range(maxStepLength))
+        columns.append("%s" % nonterminal.value)
+
+    table = []
+
+    for i in indexes:
+        row = []
+        row.append(i)
+        for j in columns:
+            if j.strip() in parsingTable[i]:
+                row.append(parsingTable[i][j.strip()])
             else:
-                data += "".join("     " for i in range(maxStepLength))
-        if ';' in parsingTable[key]:
-            data += parsingTable[key][';']
-            data += " "
-        else:
-            data += "".join("     " for i in range(maxStepLength))
-        data += "| "
-        for nonterminal in grammar.nonterminals:
-            if nonterminal.value in parsingTable[key]:
-                data += parsingTable[key][nonterminal.value]
-                data += "".join("    " for i in range(maxStepLength))
-            else:
-                data += "".join("     " for i in range(maxStepLength))
-        data += "\n"
-    return data
+                row.append('')
+        table.append(row)
+
+    headers = [''] + columns
+    return tabulate(table, headers = headers, tablefmt='pretty')
 
 def printLLParsingTableToMultiline(grammar, parsingTable):
     data = ''
     for rule in parsingTable['ruleList']:
         data += '%s. %s->%s \n' % (rule.pointer, rule.leftSide, rule.rightSide[0])
     data += '\n'
-    data += '  '
-    data += "  | "
+
+    headers = ['']
+    columns = []
     for terminal in grammar.terminals:
-        data += "  %s " % terminal.value
-    data += '  ; | \n'
+        columns.append(terminal.value)
+    columns.append(';')
+
+    table = []
     for key in parsingTable:
+
         if key == 'ruleList':
             continue
-
-        data += '%s' % key
-        data += " "
-        data += " | "
-        for terminal in grammar.terminals:
-            if terminal.value in parsingTable[key]:
-                rule = parsingTable[key][terminal.value]
-                data += "  %s " % rule.pointer
+        row = [key]
+        for terminal in columns:
+            if terminal in parsingTable[key]:
+                rule = parsingTable[key][terminal]
+                row.append(rule.pointer)
+            elif ';' in parsingTable[key]:
+                rule = parsingTable[key][';']
+                row.append(rule.pointer)
             else:
-                data += "    "
-        if ';' in parsingTable[key]:
-            rule = parsingTable[key][';']
-            data += "  %s " % rule.pointer
-        else:
-            data += "     "
-        data += "| "
-        data += "\n"
-    return data
+                row.append('')
+        table.append(row)
+    return data + tabulate(table, headers = headers + columns, tablefmt='pretty')
 
 def printPushdownAutomaton(grammar):
     data = ''

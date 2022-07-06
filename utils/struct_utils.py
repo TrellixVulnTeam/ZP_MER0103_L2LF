@@ -1,7 +1,7 @@
 from enum import Enum
-specialChars = ['+','*','/','(',')','$','-','<','>','^','&','%','#','@','!']
+specialChars = ['+','*','/','(',')','$','-','<','>','^','&','%','#','@','?','!','[',']','_']
 
-sampleCFG = 'CFG = SampleCFG\nN = {S, A, B}\nT = {a, b}\nS = S\nP = S -> aA | bB\nA -> eps\nB -> B | b | eps'
+sampleCFG = 'CFG = SampleCFG\nN = {S, A, BB}\nT = {a, b}\nS = S\nP = S -> aA | b BB\nA -> eps\nBB -> A | a'
 
 class TokenKind(Enum):
     EOF = 0 #konec souboru ''
@@ -24,7 +24,7 @@ class Terminal:
         self.value = value
         self.length = len(value)
     def __str__(self):
-        return "TERMINALY JSOU name: % s, value is % s" % (self.name, self.value)
+        return
 
 #trida definujici neterminalni symbol
 class Nonterminal:
@@ -39,7 +39,7 @@ class Nonterminal:
 class StartingSymbol:
     def __init__(self,value):
         self.value = value
-        self.length = len(value) #zbytecne asi
+        self.length = len(value)
 
 #trida definujici pravidlo gramatiky
 class Rule:
@@ -67,7 +67,7 @@ class Grammar:
         self.name = name
             #self.value = value
     def __str__(self):
-        return "From str method of Grammar: nonterminals are % s, terminals are % s" % (self.nonterminals, self.terminals)
+        return
     def addTerminal(self,terminal):
         self.terminals.append(terminal)
     def addNonterminal(self,nonterminal):
@@ -184,9 +184,9 @@ class LRParser: #trida LR parseru
                         if terminal.value in self.parsingTable[key]:
                             if self.parsingTable[key][terminal.value][0] == 's': #shift reduce conflict:
                                 self.conflicts[key] = 'SHIFT-REDUCE'
-                                print('KEY SR', key, terminal.value,self.parsingTable[key][terminal.value])
+                                #print('KEY SR', key, terminal.value,self.parsingTable[key][terminal.value])
                             if self.parsingTable[key][terminal.value][0] == 'r': #reduce reduce conflict:
-                                print('KEY RR', key, terminal.value,self.parsingTable[key][terminal.value])
+                                #print('KEY RR', key, terminal.value,self.parsingTable[key][terminal.value])
                                 self.conflicts[key] = 'REDUCE-REDUCE'
 
                         self.parsingTable[key][terminal.value] = "r%s-%s" % (rule.leftSide, len(rule.rightSide[0]))
@@ -245,7 +245,7 @@ class LLParser:
     def detectConflicts(self):
         for nt in self.grammar.nonterminals:
             for first in nt.first:
-                if first in nt.follow: #kontrola FIRST/FOLLOW konfliktu
+                if first in nt.follow and 'FIRST/FOLLOW' not in self.conflicts[nt.value]: #kontrola FIRST/FOLLOW konfliktu
                     self.conflicts[nt.value].append('FIRST/FOLLOW')
                     break
         return self.conflicts
@@ -283,7 +283,7 @@ class LLParser:
                     for nt in self.grammar.nonterminals:
                         if nt.value == term:
                             for first in nt.first:
-                                if first in self.parsingTable[parsingRule.leftSide]: #kontrola FIRST/FIRST konfliktu
+                                if first in self.parsingTable[parsingRule.leftSide] and 'FIRST/FIRST' not in self.conflicts[nt.value]: #kontrola FIRST/FIRST konfliktu
                                     self.conflicts[nt.value].append('FIRST/FIRST')
                                 self.parsingTable[parsingRule.leftSide][first] = parsingRule
                             continue
@@ -295,7 +295,6 @@ class LLParser:
         pointer = 0
         stack = [self.grammar.symbol.value] #prvni na zasobniku je pocatecni symbol
         while(len(stack) > 0):
-            #print(stack)
             top = stack[-1] #nacteni vrcholu zasobniku
             inputSymbol = inputText[pointer] #ukazatel aktualni pozice
             if top == inputSymbol: #byl najit terminal

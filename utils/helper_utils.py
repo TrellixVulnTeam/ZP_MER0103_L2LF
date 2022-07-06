@@ -62,6 +62,27 @@ def getRulesSet(grammarRules):
                 rules += (rule,) #vlozeni konkretniho pravidla typu tuple (n-tice)
     return rules
 
+def areSymbolsValid(rules, grammar):
+    terminals = []
+    for i in grammar.terminals:
+        terminals.append(i.value)
+    nonterminals = set()
+    for i in grammar.nonterminals:
+        nonterminals.add(i.value)
+    for nt, expression in rules:
+        if expression == 'eps' or expression == '':
+            continue
+        r = expression.split(' ')
+        if len(r) == 1:
+            for symbol in expression: #jednoznake neterminaly bez mezery na prave strane pravidla
+                if symbol not in nonterminals and symbol not in terminals:
+                    return False
+        else:
+            for symbol in r:
+                if symbol not in nonterminals and symbol not in terminals: #viceznake neterminaly s mezerou na prave strane pravidla
+                    return False
+    return True
+
 def find_all(a_str, sub):
     start = 0
     while True:
