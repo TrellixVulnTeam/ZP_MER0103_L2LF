@@ -1,7 +1,8 @@
-cfg=chybaLR0
-N = {S, E, T}
-T = {@, +, i, (, )}
+# Sample CFG #
+CFG = sampleCFG
+N = {S, A, B}
+T = {a, b}
 S = S
-P = S->E@
-E->E+T|T
-T->i|(E
+P = S -> aA | bB
+A -> eps
+B -> B | b | eps
